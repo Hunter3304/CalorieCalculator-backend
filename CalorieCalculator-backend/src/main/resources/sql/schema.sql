@@ -1,0 +1,22 @@
+-- 如果表已存在则删除，避免冲突 / Lösche die Tabelle, falls sie existiert, um Konflikte zu vermeiden
+DROP TABLE IF EXISTS food_items;
+
+-- 创建食物字典表，基于三大营养素和中英双语
+-- Erstelle die Lebensmittel-Wörterbuch-Tabelle, basierend auf den drei Makronährstoffen und Zweisprachigkeit
+CREATE TABLE food_items (
+    id SERIAL PRIMARY KEY,                     -- 自增主键 / Primärschlüssel (Auto-Inkrement)
+    name_zh VARCHAR(100) NOT NULL,             -- 中文名称 / Chinesischer Name
+    name_en VARCHAR(100) NOT NULL,             -- 英文名称 / Englischer Name
+    protein_per_100g NUMERIC(5, 2) NOT NULL,   -- 每100克蛋白质(g) / Protein pro 100g (g)
+    fat_per_100g NUMERIC(5, 2) NOT NULL,       -- 每100克脂肪(g) / Fett pro 100g (g)
+    carbs_per_100g NUMERIC(5, 2) NOT NULL,     -- 每100克碳水化合物(g) / Kohlenhydrate pro 100g (g)
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- 创建时间 / Erstellungszeit
+);
+
+-- 插入 4 条包含精确宏观营养素的初始测试数据
+-- Füge 4 anfängliche Testdaten mit genauen Makronährstoffen ein
+INSERT INTO food_items (name_zh, name_en, protein_per_100g, fat_per_100g, carbs_per_100g) VALUES
+('白米饭', 'White Rice', 2.60, 0.30, 25.90),
+('苹果', 'Apple', 0.20, 0.20, 13.80),
+('水煮鸡胸肉', 'Boiled Chicken Breast', 22.50, 3.20, 0.00),
+('燕麦片', 'Oatmeal', 16.90, 6.90, 66.30);
