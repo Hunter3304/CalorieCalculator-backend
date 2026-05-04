@@ -13,4 +13,7 @@ public interface FoodMapper {
     //alle fooddaten abfragen
     @Select("SELECT * FROM food_items ORDER BY id ASC")
     List<FoodItem> getAllFoods();
+
+    @Select("SELECT * FROM food_items WHERE id = #{id}")
+    FoodItem getFoodById(Long id);
 }
