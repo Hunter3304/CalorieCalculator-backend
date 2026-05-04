@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@CrossOrigin(origins = "*", maxAge = 3600) // 允许所有来源访问，方便调试
 @RestController
 @RequestMapping("/api/foods")
 public class FoodController {
