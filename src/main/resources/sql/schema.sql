@@ -10,7 +10,17 @@ CREATE TABLE food_items (
     protein_per_100g NUMERIC(5, 2) NOT NULL,   -- 每100克蛋白质(g) / Protein pro 100g (g)
     fat_per_100g NUMERIC(5, 2) NOT NULL,       -- 每100克脂肪(g) / Fett pro 100g (g)
     carbs_per_100g NUMERIC(5, 2) NOT NULL,     -- 每100克碳水化合物(g) / Kohlenhydrate pro 100g (g)
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- 创建时间 / Erstellungszeit
+    is_custom INT DEFAULT 0,
+    last_used_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- 新增：置顶时间戳
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- 创建时间 / Erstellungszeit
+);
+
+-- 每日饮食记录表
+CREATE TABLE IF NOT EXISTS daily_records (
+    id SERIAL PRIMARY KEY,
+    record_date DATE NOT NULL,
+    food_id INT NOT NULL,
+    weight NUMERIC(8,2) NOT NULL
 );
 
 -- 插入 4 条包含精确宏观营养素的初始测试数据
