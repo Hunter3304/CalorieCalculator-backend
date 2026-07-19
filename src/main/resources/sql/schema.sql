@@ -12,7 +12,7 @@ CREATE TABLE food_items (
     carbs_per_100g NUMERIC(5, 2) NOT NULL,     -- 每100克碳水化合物(g) / Kohlenhydrate pro 100g (g)
     is_custom INT DEFAULT 0,
     last_used_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- 新增：置顶时间戳
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- 创建时间 / Erstellungszeit
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- 创建时间 / Erstellungszeit
 );
 
 -- 每日饮食记录表

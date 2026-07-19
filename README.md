@@ -1,28 +1,142 @@
-# 🥗 CalorieCalculator - Backend
+# CalorieCalculator Backend
 
-基于 Spring Boot 构建的卡路里计算器 RESTful API 服务。提供底层食物字典数据支撑与核心的 4-4-9 宏量营养素（Macros）计算逻辑。
+REST API for the CalorieCalculator application. It stores a food catalog and daily food records in PostgreSQL and calculates calories from protein, carbohydrates, and fat using the 4-4-9 formula.
 
-## 🛠️ 技术栈 (Tech Stack)
-- **核心框架:** Java 17 + Spring Boot
-- **数据库:** PostgreSQL
-- **ORM 数据持久层:** MyBatis
-- **工具:** Lombok
+## Technology stack
 
-## 🚀 快速启动 (Quick Start)
+- Java 21
+- Spring Boot 4.0.6
+- Spring MVC
+- MyBatis 4.0.1
+- PostgreSQL
+- Maven Wrapper
+- Lombok
 
-### 1. 环境准备
-- JDK 17 或更高版本
-- PostgreSQL 数据库
-- Maven
+## Features
 
-### 2. 数据库初始化
-请在 PostgreSQL 中新建数据库，并执行 `src/main/resources/sql/schema.sql` 脚本以初始化 `food_items` 表和测试数据。
+- List, search, and paginate foods
+- Calculate nutrition for an arbitrary food weight
+- Create, update, list, and delete custom foods
+- Add, update, delete, and summarize daily food records
+- Import the bundled Chinese food composition JSON files
+- Configure the database and server port through environment variables
 
-### 3. 配置数据库连接
-请检查并修改 `src/main/resources/application.yml`（或 properties）文件中的数据库用户名和密码：
-```yaml
-spring:
-  datasource:
-    url: jdbc:postgresql://localhost:5432/calorie_calculator
-    username: postgres
-    password: 123456
+## Prerequisites
+
+- JDK 21 or newer
+- PostgreSQL 14 or newer
+
+Maven does not need to be installed globally because the repository includes Maven Wrapper.
+
+## Local database setup
+
+Create the database with PostgreSQL tools:
+
+```sql
+CREATE DATABASE calorie_calculator;
+```
+
+Then initialize it from the backend directory:
+
+```powershell
+psql -U postgres -d calorie_calculator -f src/main/resources/sql/schema.sql
+```
+
+Warning: `schema.sql` drops and recreates `food_items`. Run it only for initial setup or when you intentionally want to reset the food catalog. Automatic SQL initialization is disabled by default to protect local data.
+
+The default connection settings are:
+
+| Setting | Default | Environment variable |
+| --- | --- | --- |
+| Host | `localhost` | `PGHOST` |
+| Port | `5432` | `PGPORT` |
+| Database | `calorie_calculator` | `PGDATABASE` |
+| User | `postgres` | `PGUSER` |
+| Password | `123456` | `PGPASSWORD` |
+| HTTP port | `8080` | `PORT` |
+| Spring SQL initialization | `never` | `SQL_INIT_MODE` |
+
+Example for the current PowerShell session:
+
+```powershell
+$env:PGHOST = "localhost"
+$env:PGPORT = "5432"
+$env:PGDATABASE = "calorie_calculator"
+$env:PGUSER = "postgres"
+$env:PGPASSWORD = "your-postgres-password"
+```
+
+## Run locally
+
+```powershell
+.\mvnw.cmd spring-boot:run
+```
+
+The API is available at `http://localhost:8080/api`.
+
+Quick check after startup:
+
+```powershell
+Invoke-RestMethod "http://localhost:8080/api/foods/page?page=1&size=10"
+```
+
+## Build and test
+
+```powershell
+.\mvnw.cmd test
+.\mvnw.cmd clean package
+```
+
+Tests that start the Spring context require a reachable PostgreSQL database unless a test-specific datasource is configured.
+
+## API overview
+
+| Method | Path | Description |
+| --- | --- | --- |
+| GET | `/api/foods` | List all foods |
+| GET | `/api/foods/page?page=1&size=10` | List foods by page |
+| GET | `/api/foods/search?keyword=apple` | Search Chinese food names |
+| GET | `/api/foods/{id}/calculate?weight=100` | Calculate nutrition by weight |
+| GET | `/api/foods/custom` | List custom foods |
+| POST | `/api/foods/custom` | Create a custom food |
+| PUT | `/api/foods/custom/{id}` | Update a custom food |
+| DELETE | `/api/foods/custom/{id}` | Delete a custom food |
+| POST | `/api/records` | Add a daily record |
+| GET | `/api/records/{yyyy-MM-dd}` | Get a daily summary |
+| PUT | `/api/records/{id}` | Update record weight |
+| DELETE | `/api/records/{id}` | Delete a record |
+| GET | `/api/import/json` | Import bundled food JSON files |
+
+Example daily-record request:
+
+```json
+{
+  "date": "2026-07-19",
+  "foodId": 1,
+  "weight": 150
+}
+```
+
+The JSON import endpoint is intended for controlled initialization. Calling it repeatedly can insert duplicate foods.
+
+## Project structure
+
+```text
+src/main/java/.../
+  controller/   REST controllers
+  dto/          API response models
+  entity/       Food entity
+  mapper/       MyBatis SQL mappers
+  service/      Business and nutrition logic
+src/main/resources/
+  application.properties
+  data/foods/   Bundled food composition JSON files
+  sql/schema.sql
+```
+
+## Troubleshooting
+
+- `Connection refused`: start PostgreSQL and verify port `5432`.
+- `password authentication failed`: set `PGUSER` and `PGPASSWORD` to valid PostgreSQL credentials.
+- Port `8080` is occupied: set `$env:PORT = "8081"` and update the frontend API URL accordingly.
+- `mvn` is not recognized: use `.\mvnw.cmd`; global Maven is optional.
