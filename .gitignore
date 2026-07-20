@@ -31,3 +31,9 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Production secrets ###
+.env.production
+*.pem
+*.key
+*.dump
