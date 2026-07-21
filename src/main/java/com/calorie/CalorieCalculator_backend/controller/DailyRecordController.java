@@ -1,12 +1,14 @@
 package com.calorie.CalorieCalculator_backend.controller;
 
 import com.calorie.CalorieCalculator_backend.dto.DailySummaryDto;
+import com.calorie.CalorieCalculator_backend.dto.CalendarMetadataDto;
 import com.calorie.CalorieCalculator_backend.service.DailyRecordService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseEntity;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.Map;
 
 @RestController
@@ -29,6 +31,11 @@ public class DailyRecordController {
 
         recordService.addRecord(date, foodId, weight);
         return ResponseEntity.ok("添加成功");
+    }
+
+    @GetMapping("/calendar")
+    public ResponseEntity<CalendarMetadataDto> getCalendarMetadata(@RequestParam String month) {
+        return ResponseEntity.ok(recordService.getCalendarMetadata(YearMonth.parse(month)));
     }
 
     // 获取某一天的汇总数据
@@ -55,5 +62,10 @@ public class DailyRecordController {
         }
         recordService.updateRecordWeight(id, weight);
         return ResponseEntity.ok("success");
+    }
+
+    @ExceptionHandler({IllegalArgumentException.class, java.time.format.DateTimeParseException.class})
+    public ResponseEntity<String> handleInvalidRequest(RuntimeException exception) {
+        return ResponseEntity.badRequest().body(exception.getMessage());
     }
 }

@@ -40,6 +40,15 @@ public interface DailyRecordMapper {
             "WHERE r.record_date = #{date}")
     List<DailyRecordDetailDto> findRecordsByDate(@Param("date") LocalDate date);
 
+    @Select("SELECT MIN(record_date) FROM daily_records")
+    LocalDate findEarliestRecordDate();
+
+    @Select("SELECT DISTINCT record_date FROM daily_records " +
+            "WHERE record_date BETWEEN #{startDate} AND #{endDate} ORDER BY record_date")
+    List<LocalDate> findRecordedDatesBetween(
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate);
+
     // 刷新食物的最后使用时间，用于置顶
     @Update("UPDATE food_items SET last_used_time = CURRENT_TIMESTAMP WHERE id = #{foodId}")
     void bumpFoodLastUsedTime(@Param("foodId") Integer foodId);
