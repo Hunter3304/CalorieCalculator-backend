@@ -3,10 +3,12 @@ package com.calorie.CalorieCalculator_backend.service;
 
 import com.calorie.CalorieCalculator_backend.dto.DailyRecordDetailDto;
 import com.calorie.CalorieCalculator_backend.dto.DailySummaryDto;
+import com.calorie.CalorieCalculator_backend.dto.CalendarMetadataDto;
 import com.calorie.CalorieCalculator_backend.mapper.DailyRecordMapper;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.List;
 
 
@@ -22,8 +24,50 @@ public class DailyRecordService {
 
     //调用mapper层接口 给表增加记录
     public void addRecord(LocalDate date, Integer foodId, Double weight) {
+        validateRecordDate(date, LocalDate.now());
         dailyRecordMapper.insertRecord(date, foodId, weight);
         dailyRecordMapper.bumpFoodLastUsedTime(foodId);
+    }
+
+    public CalendarMetadataDto getCalendarMetadata(YearMonth month) {
+        return getCalendarMetadata(month, LocalDate.now());
+    }
+
+    CalendarMetadataDto getCalendarMetadata(YearMonth month, LocalDate today) {
+        LocalDate minDate = getMinDate(today);
+        LocalDate maxDate = today.plusDays(7);
+        LocalDate monthStart = month.atDay(1);
+        LocalDate monthEnd = month.atEndOfMonth();
+        LocalDate queryStart = monthStart.isBefore(minDate) ? minDate : monthStart;
+        LocalDate queryEnd = monthEnd.isAfter(maxDate) ? maxDate : monthEnd;
+        List<LocalDate> recordedDates = queryStart.isAfter(queryEnd)
+                ? List.of()
+                : dailyRecordMapper.findRecordedDatesBetween(queryStart, queryEnd);
+        return new CalendarMetadataDto(minDate, maxDate, recordedDates);
+    }
+
+    void validateRecordDate(LocalDate date, LocalDate today) {
+        if (date == null) {
+            throw new IllegalArgumentException("Record date is required");
+        }
+        LocalDate minDate = getMinDate(today);
+        LocalDate maxDate = today.plusDays(7);
+        if (date.isBefore(minDate) || date.isAfter(maxDate)) {
+            throw new IllegalArgumentException(
+                    "Record date must be between " + minDate + " and " + maxDate);
+        }
+    }
+
+    private LocalDate getMinDate(LocalDate today) {
+        LocalDate oneYearAgo = today.minusYears(1);
+        LocalDate earliestRecordDate = dailyRecordMapper.findEarliestRecordDate();
+        if (earliestRecordDate == null) {
+            return today;
+        }
+        if (earliestRecordDate.isAfter(today)) {
+            return today;
+        }
+        return earliestRecordDate.isBefore(oneYearAgo) ? oneYearAgo : earliestRecordDate;
     }
 
     // 删除记录
