@@ -2,6 +2,8 @@
 
 REST API for the CalorieCalculator application. It stores a food catalog and daily food records in PostgreSQL and calculates calories from protein, carbohydrates, and fat using the 4-4-9 formula.
 
+Project handoff, iteration history, and iteration plans are indexed in [`doc/README.md`](doc/README.md).
+
 ## Technology stack
 
 - Java 21
