@@ -32,6 +32,7 @@ The import script is idempotent: it imports bundled JSON only when the table con
 ```sh
 curl --fail http://localhost/healthz
 curl --fail "http://localhost/api/foods/page?page=1&size=10"
+curl --fail "http://localhost/api/records/calendar?month=$(date +%Y-%m)"
 docker compose --env-file .env.production -f docker-compose.production.yml ps
 ```
 
@@ -40,6 +41,9 @@ docker compose --env-file .env.production -f docker-compose.production.yml ps
 ```sh
 # Logs
 docker compose --env-file .env.production -f docker-compose.production.yml logs -f --tail=200
+
+# Keep a rollback tag before replacing a known-good backend image
+docker image tag calorie-calculator-backend:latest calorie-calculator-backend:pre-deploy
 
 # Deploy a new revision
 docker compose --env-file .env.production -f docker-compose.production.yml up -d --build
@@ -62,3 +66,14 @@ Do not run `docker compose down --volumes` in production because it deletes the 
 - Blocked by Nginx: `/api/import/*`
 
 The IP-based HTTP deployment is suitable for infrastructure verification only. A WeChat Mini Program production release requires an approved HTTPS API domain.
+
+## Calendar release verification
+
+After deploying a calendar-enabled revision, verify all of the following:
+
+- `/healthz` returns HTTP 200.
+- `/api/foods/page?page=1&size=10` still reports the expected catalog total.
+- `/api/records/calendar?month=yyyy-MM` returns `minDate`, `maxDate`, and `recordedDates`.
+- PostgreSQL was not recreated and the existing named volume remains attached.
+- `/api/import/*` remains unavailable through public Nginx.
+- Backend and PostgreSQL containers report `healthy` before considering the deployment complete.

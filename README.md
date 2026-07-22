@@ -18,6 +18,8 @@ REST API for the CalorieCalculator application. It stores a food catalog and dai
 - Calculate nutrition for an arbitrary food weight
 - Create, update, list, and delete custom foods
 - Add, update, delete, and summarize daily food records
+- Navigate records by date, backfill historical days, and plan up to seven days ahead
+- Return natural-month calendar metadata, selectable bounds, and recorded-date markers
 - Import the bundled Chinese food composition JSON files
 - Configure the database and server port through environment variables
 
@@ -103,6 +105,7 @@ Tests that start the Spring context require a reachable PostgreSQL database unle
 | DELETE | `/api/foods/custom/{id}` | Delete a custom food |
 | POST | `/api/records` | Add a daily record |
 | GET | `/api/records/{yyyy-MM-dd}` | Get a daily summary |
+| GET | `/api/records/calendar?month=yyyy-MM` | Get selectable bounds and recorded dates for a natural month |
 | PUT | `/api/records/{id}` | Update record weight |
 | DELETE | `/api/records/{id}` | Delete a record |
 | GET | `/api/import/json` | Import bundled food JSON files |
@@ -111,13 +114,31 @@ Example daily-record request:
 
 ```json
 {
-  "date": "2026-07-19",
+  "date": "2026-07-22",
   "foodId": 1,
   "weight": 150
 }
 ```
 
 The JSON import endpoint is intended for controlled initialization. Calling it repeatedly can insert duplicate foods.
+
+### Record date rules
+
+- The earliest selectable date is the later of the first recorded date and one year before the server's current date.
+- When there are no records, or the first record is a future plan, today remains selectable.
+- The latest selectable date is seven days after the server's current date.
+- `POST /api/records` rejects dates outside this range with HTTP 400.
+- `GET /api/records/calendar` returns `minDate`, `maxDate`, and the distinct `recordedDates` within the requested month.
+
+Example calendar response:
+
+```json
+{
+  "minDate": "2026-07-21",
+  "maxDate": "2026-07-29",
+  "recordedDates": ["2026-07-21"]
+}
+```
 
 ## Project structure
 
@@ -133,6 +154,20 @@ src/main/resources/
   data/foods/   Bundled food composition JSON files
   sql/schema.sql
 ```
+
+## Production deployment
+
+The production stack runs on Tencent Cloud Lighthouse with Docker Compose:
+
+- Nginx is the only public container and currently publishes HTTP port 80.
+- Spring Boot listens only on the private Compose network at port 8080.
+- PostgreSQL 17 listens only on the private Compose network at port 5432.
+- PostgreSQL data is stored in the named `postgres_data` volume.
+- `/api/import/*` is blocked by Nginx.
+
+Deployment and rollback commands are documented in [`deploy/README.md`](deploy/README.md). Never print or commit `.env.production`, and never run `docker compose down --volumes` in production.
+
+The calendar backend was deployed and verified on 2026-07-22. The HTTP IP endpoint remains suitable only for development and experience-version testing. Formal Mini Program release still requires an ICP-filed domain, HTTPS, and a configured WeChat request domain.
 
 ## Troubleshooting
 
