@@ -18,6 +18,20 @@ chmod 600 .env.production
 
 Replace `POSTGRES_PASSWORD` with a long random value. Never commit `.env.production`.
 
+## Apply the body-weight migration
+
+Existing installations must create the body-weight table before deploying a weight-enabled backend. Back up PostgreSQL first, then apply only the non-destructive migration:
+
+```sh
+docker compose --env-file .env.production -f docker-compose.production.yml exec -T postgres \
+  sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" --format=custom' > calorie_calculator-before-weight.dump
+
+docker compose --env-file .env.production -f docker-compose.production.yml exec -T postgres \
+  sh -c 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"' \
+  < src/main/resources/sql/migrations/2026-07-22-create-body-weight-records.sql
+```
+
+Do not rerun `schema.sql` on an existing installation because it recreates the food catalog table.
 ## Start
 
 ```sh

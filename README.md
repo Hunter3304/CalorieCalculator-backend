@@ -22,6 +22,8 @@ Project handoff, iteration history, and iteration plans are indexed in [`doc/REA
 - Add, update, delete, and summarize daily food records
 - Navigate records by date, backfill historical days, and plan up to seven days ahead
 - Return natural-month calendar metadata, selectable bounds, and recorded-date markers
+- Record, edit, delete, and carry forward one body-weight entry per date
+- Return rolling body-weight trend points with real-record markers
 - Import the bundled Chinese food composition JSON files
 - Configure the database and server port through environment variables
 
@@ -47,6 +49,12 @@ psql -U postgres -d calorie_calculator -f src/main/resources/sql/schema.sql
 ```
 
 Warning: `schema.sql` drops and recreates `food_items`. Run it only for initial setup or when you intentionally want to reset the food catalog. Automatic SQL initialization is disabled by default to protect local data.
+
+For an existing database, apply the non-destructive body-weight migration instead of rerunning `schema.sql`:
+
+```powershell
+psql -U postgres -d calorie_calculator -f src/main/resources/sql/migrations/2026-07-22-create-body-weight-records.sql
+```
 
 The default connection settings are:
 
@@ -108,6 +116,11 @@ Tests that start the Spring context require a reachable PostgreSQL database unle
 | POST | `/api/records` | Add a daily record |
 | GET | `/api/records/{yyyy-MM-dd}` | Get a daily summary |
 | GET | `/api/records/calendar?month=yyyy-MM` | Get selectable bounds and recorded dates for a natural month |
+| GET | `/api/weights/{yyyy-MM-dd}` | Get the selected date body weight or its carried-forward source |
+| PUT | `/api/weights/{yyyy-MM-dd}` | Create or replace that date body-weight record |
+| PUT | `/api/weights/records/{id}` | Update a real body-weight record |
+| DELETE | `/api/weights/records/{id}` | Delete a real body-weight record |
+| GET | `/api/weights/trend?startDate=yyyy-MM-dd&endDate=yyyy-MM-dd` | Get up to 365 daily trend points |
 | PUT | `/api/records/{id}` | Update record weight |
 | DELETE | `/api/records/{id}` | Delete a record |
 | GET | `/api/import/json` | Import bundled food JSON files |
