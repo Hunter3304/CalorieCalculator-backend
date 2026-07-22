@@ -29,5 +29,5 @@ The shared project documentation needed to be stored inside both independent Git
 
 ## GitHub records
 
-- Backend Issue #7.
-- Frontend Issue #11.
+- Backend Issue #7 / Pull Request #8.
+- Frontend Issue #11 / Pull Request #12.
