@@ -1,7 +1,7 @@
 # Weight Tracking and Trend Sprint
 
 Date: 2026-07-22
-Status: Planned
+Status: Completed
 
 ## Requested outcome
 
@@ -64,3 +64,15 @@ Add a maintainable body-weight module alongside daily food tracking. Users can r
 - Frontend Issue #14: homepage card, editor, actions, and visual theme.
 - Frontend Issue #15: trend chart, presets, calendar, and trend tests.
 - Backend Issue #11: production migration, deployment, and verification.
+- Frontend Issue #17: iteration documentation and release handoff.
+- Backend Pull Request #12: merged body-weight persistence, APIs, migration, and tests.
+- Frontend Pull Request #16: merged homepage/editor/trend UI, styling, and tests.
+
+## Completion record
+
+- Backend Issues #10 and Frontend Issues #14/#15 were closed by merged feature Pull Requests.
+- The production migration and backend release were completed on 2026-07-22 with a pre-deployment PostgreSQL backup and retained rollback image.
+- Production API acceptance covered create, effective-value carry-forward, pre-first-record blanks, trend points, deletion, and post-test empty-state cleanup.
+- Backend tests passed: 14. Frontend tests passed: 11, plus WeChat bundle compatibility verification.
+- The H5 production build passed. In-app visual browser inspection could not run because the Windows sandbox refresh failed before browser setup; no visual result is claimed.
+- The WeChat production bundle is ready for the user-owned DevTools upload step.

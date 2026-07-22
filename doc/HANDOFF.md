@@ -322,3 +322,27 @@ The documentation migration on 2026-07-22 exposed the following local workflow d
 - Run `git diff --check` before committing. During this migration it detected an extra blank line at the end of `HANDOFF.md`; normalize files to one final newline before commit.
 - Shared project documentation now has versioned copies in both repositories. Update both copies for cross-project facts and compare their relative file lists and SHA-256 hashes before merging. Repository-specific documentation can remain local to the affected repository.
 - The original `D:\AAA\develop\CalorieCalculator\doc` directory was retained as an unversioned migration backup. The repository copies are authoritative; do not update only the old top-level copy or use it as the sole handoff source.
+## 14. Weight Tracking Sprint and production state
+
+The Weight Tracking Sprint was completed on 2026-07-22:
+
+- GitHub Project: `CalorieCalculator - Weight Tracking Sprint` (Project #4).
+- Backend Issue #10 / Pull Request #12 delivered persistence, APIs, migration, and 14 passing backend tests.
+- Frontend Issues #14 and #15 / Pull Request #16 delivered the homepage actions and card, editor, trend page, calendar, theme, and 11 passing frontend tests.
+- `body_weight_records` stores one positive, one-decimal kilogram value per real record date.
+- Snapshot lookup returns the selected date's real record or the most recent earlier record and exposes the real source date.
+- Trend lookup preserves null dates before the first record and carries the latest real value through later missing dates.
+- Production was backed up to `backups/calorie_calculator-before-weight-20260722.dump` and the old image was retained as `calorie-calculator-backend:pre-weight-20260722`.
+- The migration and merged backend were deployed successfully. Public create, carry-forward, trend, delete, and cleanup acceptance checks passed.
+- The temporary production test record was deleted; the new table was empty after verification.
+- PostgreSQL container ID `d03bd2712c2e4c2192776c43c0f7e929684f40e2e0cb8af4e2b1d6f56e5293ea` and creation time `2026-07-20T08:20:57.166504568Z` were unchanged across deployment.
+- The WeChat production build and compatibility check passed. Uploading the new Mini Program package remains a manual user-owned step.
+- The H5 build passed, but required in-app browser visual inspection could not start because of the documented Windows sandbox refresh failure; do not treat it as visually approved.
+
+Additional lessons from this iteration:
+
+- VPN-connected GitHub and SSH responses may be slow without being failed. Use longer timeouts, then inspect the authoritative remote state before retrying to avoid duplicate Issues, migrations, or deployments.
+- JSON sent through PowerShell, SSH, and a remote POSIX shell can lose quoting. Prefer a direct HTTP client with a structured body for acceptance requests.
+- A chained migration command can report `CREATE TABLE` and then fail in its verification segment. Verify independently before rerunning an idempotent migration.
+- H5 and WeChat builds share `dist`. Source-level tests must target their source suites explicitly; the generated-bundle compatibility test belongs after the matching WeChat build.
+- Trend APIs and renderers must retain null points before the first record so the horizontal date scale remains accurate.
