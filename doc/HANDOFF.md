@@ -1,0 +1,323 @@
+# CalorieCalculator Engineering Handoff
+
+Last updated: 2026-07-22 (Asia/Shanghai)
+
+## 1. Purpose
+
+Read this file before starting any new work on CalorieCalculator. It records the current local, GitHub, database, cloud deployment, and WeChat Mini Program state. Treat the repository status and user-owned uncommitted files documented below as important constraints.
+
+## 2. Project layout
+
+This is a frontend/backend-separated project with two independent Git repositories:
+
+- Backend: `D:\AAA\develop\CalorieCalculator\CalorieCalculator-backend`
+- Frontend: `D:\AAA\develop\CalorieCalculator\CalorieCalculator-frontend`
+- Backend documentation: `D:\AAA\develop\CalorieCalculator\CalorieCalculator-backend\doc`
+- Frontend documentation: `D:\AAA\develop\CalorieCalculator\CalorieCalculator-frontend\doc`
+- Iteration feedback: `doc\iterations` in each repository
+- Iteration plans: `doc\plans` in each repository
+- The two versioned documentation copies are shared project records and must be kept synchronized whenever common documentation changes.
+
+Git executable:
+
+- `D:\AAA\app\Git\cmd\git.exe`
+
+Node.js/npm:
+
+- Node installation: `D:\AAA\app\NodeJS`
+- Use `D:\AAA\app\NodeJS\npm.cmd` from PowerShell because execution policy blocks `npm.ps1`.
+
+GitHub CLI:
+
+- `D:\AAA\app\GitHubCLI\gh.exe`
+- Authenticated GitHub account: `Hunter3304`
+
+## 3. GitHub repositories
+
+- Backend: `git@github.com:Hunter3304/CalorieCalculator-backend.git`
+- Frontend: `git@github.com:Hunter3304/CalorieCalculator-frontend.git`
+
+Required engineering workflow for future changes:
+
+1. Diagnose and reproduce the problem.
+2. Create a GitHub Issue before creating a branch.
+3. Update local `main` from `origin/main`.
+4. Create an Issue-linked feature/fix branch.
+5. Implement maintainable, extensible, and testable changes.
+6. Run proportionate unit tests, static checks, builds, and integration checks.
+7. Push the branch and create a Pull Request.
+8. Merge the Pull Request into `main`.
+9. Confirm the Issue is closed.
+10. Delete both the remote and local working branch.
+11. Preserve unrelated user changes throughout.
+
+## 4. Current Git state
+
+### Frontend
+
+Current branch: `main`, synchronized with `origin/main` at or after documentation merge commit `86eaef1`.
+
+The previous `project.config.json` and `project.private.config.json` modified status was caused only by Windows line-ending/index metadata. It was safely refreshed without changing file content. The frontend working tree was clean after cleanup.
+
+### Backend
+
+Current branch: `main`, synchronized with `origin/main` at or after documentation merge commit `ce83347`.
+
+IntelliJ `.idea` metadata is no longer tracked. Local IDE files remain on disk and are ignored by Git. The backend working tree was clean after cleanup.
+
+Both repositories should contain only the local and remote `main` branch after a completed workflow. Calendar feature branches were deleted locally and remotely on 2026-07-21; documentation branches were cleaned after merge on 2026-07-22.
+
+## 5. Backend
+
+Technology:
+
+- Spring Boot
+- Java 21
+- Maven Wrapper (`mvnw.cmd`)
+- MyBatis
+- PostgreSQL
+- Default local backend port: `8080`
+
+Local datasource password configuration intentionally retains a development fallback:
+
+```properties
+spring.datasource.password=${PGPASSWORD:123456}
+```
+
+Do not commit real passwords. The strong local PostgreSQL password is stored in the current Windows user's `PGPASSWORD` environment variable. Production secrets are stored only on the server.
+
+Useful local commands:
+
+```powershell
+cd D:\AAA\develop\CalorieCalculator\CalorieCalculator-backend
+.\mvnw.cmd test
+.\mvnw.cmd spring-boot:run
+```
+
+Local API example:
+
+```text
+http://localhost:8080/api/foods/page?page=1&size=10
+```
+
+## 6. Local PostgreSQL
+
+- PostgreSQL version: 17.10
+- Installation: `D:\AAA\app\PostgreSQL\17`
+- Windows service: `postgresql-x64-17`
+- Service startup: Automatic
+- Database: `calorie_calculator`
+- Database user: `postgres`
+- Password: stored in the Windows user-level `PGPASSWORD`; never copy it into this file or Git.
+- Food data count after import: 1799 rows
+- Source food JSON files imported: 75 files / 1795 imported records, plus 4 seed records
+
+pgAdmin was discussed as a desired database management tool; verify its actual installation state before assuming it is available.
+
+## 7. Tencent Cloud production deployment
+
+Server:
+
+- Provider: Tencent Cloud Lighthouse
+- Instance name: `calorie-calculator-prod`
+- Region: Shanghai
+- OS: Ubuntu 24.04.4 LTS
+- Public IPv4: `124.221.90.240`
+- SSH user: `ubuntu`
+- SSH private key: `D:\AAA\keys\calorie_calculator_prod\calorie_calculator_prod.pem`
+
+Never print or commit the SSH private key. Its Windows ACL has already been restricted.
+
+Server application directory:
+
+- `/opt/calorie-calculator`
+
+Runtime architecture:
+
+- Nginx container publishes port 80.
+- Spring Boot backend is internal-only on port 8080.
+- PostgreSQL 17 container is internal-only on port 5432.
+- PostgreSQL data uses a persistent Docker named volume.
+- Docker Engine and Docker Compose are enabled on boot.
+- Server has approximately 2 CPU, 3.6 GiB RAM, and 2 GiB swap.
+
+Production secret handling:
+
+- Production database password is random and stored only in `/opt/calorie-calculator/.env.production` with mode 600.
+- Never print, download, or commit the production password.
+
+Deployment files in the backend repository:
+
+- `Dockerfile`
+- `.dockerignore`
+- `.env.production.example`
+- `docker-compose.production.yml`
+- `maven-settings.xml`
+- `deploy/nginx.conf`
+- `deploy/import-foods.sh`
+- `deploy/README.md`
+
+Production checks last verified on 2026-07-22 after the calendar backend deployment:
+
+- `http://124.221.90.240/healthz` returns HTTP 200.
+- `http://124.221.90.240/api/foods/page?page=1&size=10` returns data.
+- `http://124.221.90.240/api/records/calendar?month=2026-07` returns calendar metadata.
+- Verified calendar bounds: `2026-07-21` through `2026-07-29`, with one recorded date at verification time.
+- Backend and Nginx were recreated from the merged calendar source and returned healthy/running status.
+- PostgreSQL was not recreated; the existing container and named data volume remained in place.
+- Previous backend image retained as `calorie-calculator-backend:pre-calendar` for rollback.
+- Production food count: 1799.
+- Public ports 5432 and 8080 are not exposed.
+- `/api/import/*` is blocked by Nginx.
+- Container restart persistence was previously verified.
+
+## 8. Frontend and WeChat Mini Program
+
+Technology:
+
+- Taro 4.2.0
+- React 18
+- WeChat Mini Program output: `dist/`
+- AppID: `wx7ed730f3cde2c594`
+
+Install/build/test commands:
+
+```powershell
+cd D:\AAA\develop\CalorieCalculator\CalorieCalculator-frontend
+D:\AAA\app\NodeJS\npm.cmd install
+D:\AAA\app\NodeJS\npm.cmd test
+D:\AAA\app\NodeJS\npm.cmd run verify:weapp
+```
+
+`verify:weapp` builds the production package and verifies that the generated `dist/common.js` does not contain optional chaining (`?.`) or nullish coalescing (`??`), because the WeChat upload validator rejected those tokens.
+
+Environment configuration:
+
+- `.env.development` currently points to `http://124.221.90.240/api`.
+- `.env.production` currently points to `http://124.221.90.240/api`.
+- `src/services/api.js` retains `http://localhost:8080/api` only as a fallback when no environment value is injected.
+- The generated production bundle was verified to use the Tencent Cloud API, not localhost.
+
+Recent frontend fixes:
+
+- Homepage no longer downloads the entire 1799-item food list unnecessarily.
+- Confirming a food weight now immediately persists the daily record instead of silently adding it to a second-step cart.
+- Save responses validate HTTP status codes.
+- Duplicate save submissions are prevented while a request is in progress.
+- Successful saves return to the homepage, whose `useDidShow` refreshes the daily summary.
+- The obsolete `CartFooter` component was removed.
+- Automated API response tests were added.
+- WeChat bundle syntax compatibility tests were added.
+
+
+Calendar system Sprint completed in code on 2026-07-21:
+
+- GitHub Project: `CalorieCalculator - Calendar System Sprint` (Project #3); all four items are Done.
+- Backend Issue #3 / Pull Request #4: calendar metadata, recorded-date markers, and authoritative date bounds (merged).
+- Frontend Issues #5, #6, and #7 / Pull Request #8: homepage date navigation, natural-month picker, date-aware food entry, and verification (merged).
+- Backend `main` synchronized at merge commit `86af670` or later.
+- Frontend `main` synchronized at merge commit `d53ccd7` or later.
+- The selectable lower bound is the later of the first recorded date and one year before today; it never moves later than today.
+- The selectable upper bound is seven days after today, and future dates in that window accept planned food records.
+- Empty selectable dates show zero totals and accept backfilled/planned records.
+- Calendar months show recorded dates with a dark marker and the selected date with a distinct highlight.
+- The selected date is explicitly passed to the add-food page and preserved when returning home.
+- Stale-response guards prevent rapid date changes from showing data for a previously selected date.
+- Backend tests: 6 passed.
+- Frontend tests: 8 passed.
+- `npm run verify:weapp` passed, and the production bundle contains no localhost API URL.
+
+Deployment status for this Sprint:
+
+- The merged backend calendar API was deployed to Tencent Cloud and verified on 2026-07-22.
+- The newly built frontend package has not yet been uploaded as a new WeChat experience version; the user owns this manual upload step.
+
+Relevant GitHub records:
+
+- Issue #1: selected food not added to daily records (closed)
+- Pull Request #2: daily record persistence fix (merged)
+- Issue #3: WeChat uploader rejected optional chaining (closed)
+- Pull Request #4: WeChat JavaScript compatibility fix (merged)
+
+Backend repository cleanup records:
+
+- Backend Issue #1: stop tracking IntelliJ IDEA metadata (closed)
+- Backend Pull Request #2: IntelliJ metadata cleanup (merged)
+
+Documentation refresh records:
+
+- Backend Issue #5: document calendar API and production deployment (closed).
+- Backend Pull Request #6: backend/deployment README refresh (merged).
+- Frontend Issue #9: update Mini Program calendar and release guide (closed).
+- Frontend Pull Request #10: frontend README refresh (merged).
+
+## 9. WeChat test/experience version status
+
+- Local WeChat DevTools testing works.
+- The latest code can be uploaded successfully after the JavaScript compatibility fix.
+- An experience version QR code was generated and tested successfully.
+- Experience-version food loading initially appeared blank because the phone blocked the HTTP IP request.
+- Enabling `Developer Debugging` in the experience version allowed the HTTP API and produced fast responses.
+
+Important distinction:
+
+- `project.private.config.json` disables URL checking only for local development tooling.
+- Experience/development builds may be tested on approved accounts with developer debugging enabled.
+- A formal public release must not depend on developer debugging.
+
+## 10. Domain, HTTPS, and formal release blocker
+
+The production API still uses plain HTTP and a raw IP address:
+
+```text
+http://124.221.90.240/api
+```
+
+This is acceptable only for current development/experience testing with debugging. Before formal public release:
+
+1. Complete domain purchase and real-name verification.
+2. Complete ICP filing for the domain because the server is in mainland China.
+3. Create an API subdomain such as `api.<domain>` pointing to `124.221.90.240`.
+4. Configure a valid HTTPS certificate and port 443 on the server.
+5. Add `https://api.<domain>` as the WeChat `request` legal domain (no `/api` path in the platform domain entry).
+6. Change `.env.production` to `https://api.<domain>/api`.
+7. Build with `npm run verify:weapp`.
+8. Test on a real device without developer debugging.
+9. Upload a new version, submit for WeChat review, and publish after approval.
+
+The user selected an inexpensive `.top` domain, but the full domain name has not been recorded in this conversation. Do not guess it. Ask the user for the exact registered domain and confirm real-name/ICP status before configuring DNS or TLS.
+
+## 11. Security and operational follow-ups
+
+Recommended future production hardening:
+
+- Configure HTTPS as described above.
+- Add scheduled PostgreSQL backups stored off the server.
+- Add Docker log rotation limits.
+- Apply regular Ubuntu security updates.
+- Restrict SSH ingress to trusted source IPs when practical.
+- Configure Tencent Cloud snapshots.
+- Add monitoring/alerting for `/healthz`, disk usage, database health, and container restarts.
+
+## 12. Immediate next-task checklist
+
+Before changing code:
+
+1. Read this entire file.
+2. Inspect both repository statuses.
+3. Confirm both repositories are still clean before starting; preserve any new user-owned changes that appear later.
+4. Confirm whether the task affects frontend, backend, infrastructure, or more than one repository.
+5. Create and maintain the iteration plan under `doc/plans` in every affected repository.
+6. For code changes, create the GitHub Issue before creating the branch.
+7. Never expose passwords, production `.env` contents, or SSH key material.
+
+## 13. Workspace and documentation lessons
+
+The documentation migration on 2026-07-22 exposed the following local workflow details. Use them to avoid repeating diagnosis work:
+
+- The Windows Codex sandbox intermittently returned `helper_unknown_error: setup refresh had errors`, including for read-only `rg` commands and built-in patch operations. When this exact infrastructure error recurs, retry only the required command with narrowly scoped approval; it does not indicate a repository or application failure.
+- The temporary `apply_patch.bat` wrapper was discoverable but its packaged WindowsApps executable returned `Access is denied`. Retry the built-in patch path first. If it remains unavailable, use an explicitly approved, exact-match edit that fails when expected text is absent, then inspect the Git diff immediately.
+- PowerShell does not automatically stop a multi-command script when a native executable returns a nonzero status. Check `$LASTEXITCODE` after Git checks, tests, and builds when later commands must not continue after failure.
+- Run `git diff --check` before committing. During this migration it detected an extra blank line at the end of `HANDOFF.md`; normalize files to one final newline before commit.
+- Shared project documentation now has versioned copies in both repositories. Update both copies for cross-project facts and compare their relative file lists and SHA-256 hashes before merging. Repository-specific documentation can remain local to the affected repository.
+- The original `D:\AAA\develop\CalorieCalculator\doc` directory was retained as an unversioned migration backup. The repository copies are authoritative; do not update only the old top-level copy or use it as the sole handoff source.
