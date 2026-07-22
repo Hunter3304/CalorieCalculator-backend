@@ -1,6 +1,6 @@
 # CalorieCalculator Backend
 
-REST API for the CalorieCalculator application. It stores a food catalog and daily food records in PostgreSQL and calculates calories from protein, carbohydrates, and fat using the 4-4-9 formula.
+REST API for the CalorieCalculator application. It stores the food catalog, daily food records, and body-weight history in PostgreSQL and calculates calories from protein, carbohydrates, and fat using the 4-4-9 formula.
 
 Project handoff, iteration history, and iteration plans are indexed in [`doc/README.md`](doc/README.md).
 
@@ -101,6 +101,8 @@ Invoke-RestMethod "http://localhost:8080/api/foods/page?page=1&size=10"
 
 Tests that start the Spring context require a reachable PostgreSQL database unless a test-specific datasource is configured.
 
+The current suite contains 14 tests, including eight body-weight service tests covering validation, effective-record lookup, trend behavior, update, and deletion.
+
 ## API overview
 
 | Method | Path | Description |
@@ -161,13 +163,14 @@ Example calendar response:
 src/main/java/.../
   controller/   REST controllers
   dto/          API response models
-  entity/       Food entity
+  entity/       Persistent food, daily-record, and body-weight entities
   mapper/       MyBatis SQL mappers
   service/      Business and nutrition logic
 src/main/resources/
   application.properties
   data/foods/   Bundled food composition JSON files
   sql/schema.sql
+  sql/migrations/  Non-destructive upgrades for existing databases
 ```
 
 ## Production deployment
@@ -182,7 +185,9 @@ The production stack runs on Tencent Cloud Lighthouse with Docker Compose:
 
 Deployment and rollback commands are documented in [`deploy/README.md`](deploy/README.md). Never print or commit `.env.production`, and never run `docker compose down --volumes` in production.
 
-The calendar backend was deployed and verified on 2026-07-22. The HTTP IP endpoint remains suitable only for development and experience-version testing. Formal Mini Program release still requires an ICP-filed domain, HTTPS, and a configured WeChat request domain.
+The calendar and body-weight backends were deployed and verified on 2026-07-22. The weight release used a pre-migration PostgreSQL backup, retained the previous backend image for rollback, and recreated only the backend container; the existing PostgreSQL container and volume remained in place. Health, snapshot, carry-forward, trend, delete, cleanup, and public import-blocking checks passed.
+
+The HTTP IP endpoint remains suitable only for development and experience-version testing. Formal Mini Program release still requires an ICP-filed domain, HTTPS, and a configured WeChat request domain.
 
 ## Troubleshooting
 
