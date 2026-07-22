@@ -22,6 +22,14 @@ CREATE TABLE IF NOT EXISTS daily_records (
     food_id INT NOT NULL,
     weight NUMERIC(8,2) NOT NULL
 );
+-- 每日体重记录表：每个自然日最多一条真实记录
+CREATE TABLE IF NOT EXISTS body_weight_records (
+    id SERIAL PRIMARY KEY,
+    record_date DATE NOT NULL UNIQUE,
+    weight_kg NUMERIC(8,1) NOT NULL CHECK (weight_kg > 0),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
 
 -- 插入 4 条包含精确宏观营养素的初始测试数据
 -- Füge 4 anfängliche Testdaten mit genauen Makronährstoffen ein
