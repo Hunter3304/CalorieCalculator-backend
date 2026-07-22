@@ -50,6 +50,7 @@ Add a maintainable body-weight module to the existing daily food workflow. The h
 - Applied the non-destructive migration and deployed the merged backend.
 - Verified `/healthz`, an empty snapshot, an empty trend, create, carry-forward, pre-first-record null points, and deletion through the public API.
 - Deleted the temporary acceptance record and confirmed the weight table returned to an empty state.
+- A later read-only check observed a new real record created after acceptance cleanup. It was treated as user data and left untouched; no personal value was copied into project documentation.
 - PostgreSQL container ID and creation timestamp remained unchanged; only the backend container was recreated. Nginx remained running.
 - `/api/import/json` continued to return HTTP 404 through Nginx.
 - The updated Mini Program package is built locally but still requires the user to upload it manually with WeChat DevTools.
@@ -61,6 +62,8 @@ Add a maintainable body-weight module to the existing daily food workflow. The h
 - Frontend Issues [#14](https://github.com/Hunter3304/CalorieCalculator-frontend/issues/14), [#15](https://github.com/Hunter3304/CalorieCalculator-frontend/issues/15), and [#17](https://github.com/Hunter3304/CalorieCalculator-frontend/issues/17)
 - Backend Pull Request [#12](https://github.com/Hunter3304/CalorieCalculator-backend/pull/12)
 - Frontend Pull Request [#16](https://github.com/Hunter3304/CalorieCalculator-frontend/pull/16)
+- Backend deployment/documentation Pull Request [#13](https://github.com/Hunter3304/CalorieCalculator-backend/pull/13)
+- Frontend release-documentation Pull Request [#18](https://github.com/Hunter3304/CalorieCalculator-frontend/pull/18)
 
 ## Problems and lessons for the next iteration
 
