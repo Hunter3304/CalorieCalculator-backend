@@ -24,6 +24,8 @@ Project handoff, iteration history, and iteration plans are indexed in [`doc/REA
 - Return natural-month calendar metadata, selectable bounds, and recorded-date markers
 - Record, edit, delete, and carry forward one body-weight entry per date
 - Return rolling body-weight trend points with real-record markers
+- Record six independently optional body-circumference values per date
+- Carry each circumference forward independently and return selectable single-measurement trends
 - Import the bundled Chinese food composition JSON files
 - Configure the database and server port through environment variables
 
@@ -54,6 +56,11 @@ For an existing database, apply the non-destructive body-weight migration instea
 
 ```powershell
 psql -U postgres -d calorie_calculator -f src/main/resources/sql/migrations/2026-07-22-create-body-weight-records.sql
+```
+Apply the circumference migration in the same non-destructive way:
+
+```powershell
+psql -U postgres -d calorie_calculator -f src/main/resources/sql/migrations/2026-07-27-create-body-circumference-records.sql
 ```
 
 The default connection settings are:
@@ -123,6 +130,10 @@ The current suite contains 14 tests, including eight body-weight service tests c
 | PUT | `/api/weights/records/{id}` | Update a real body-weight record |
 | DELETE | `/api/weights/records/{id}` | Delete a real body-weight record |
 | GET | `/api/weights/trend?startDate=yyyy-MM-dd&endDate=yyyy-MM-dd` | Get up to 365 daily trend points |
+| GET | `/api/circumferences/{yyyy-MM-dd}` | Get six effective circumference values and their source dates |
+| PUT | `/api/circumferences/{yyyy-MM-dd}` | Create, update, or clear sparse selected-date circumference values |
+| DELETE | `/api/circumferences/records/{id}` | Delete a selected-date circumference record |
+| GET | `/api/circumferences/trend?type=waist&startDate=yyyy-MM-dd&endDate=yyyy-MM-dd` | Get one circumference measurement's daily trend |
 | PUT | `/api/records/{id}` | Update record weight |
 | DELETE | `/api/records/{id}` | Delete a record |
 | GET | `/api/import/json` | Import bundled food JSON files |
@@ -163,7 +174,7 @@ Example calendar response:
 src/main/java/.../
   controller/   REST controllers
   dto/          API response models
-  entity/       Persistent food, daily-record, and body-weight entities
+  entity/       Persistent food, daily-record, body-weight, and circumference entities
   mapper/       MyBatis SQL mappers
   service/      Business and nutrition logic
 src/main/resources/
