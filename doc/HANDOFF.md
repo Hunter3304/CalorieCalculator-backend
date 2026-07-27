@@ -1,6 +1,6 @@
 # CalorieCalculator Engineering Handoff
 
-Last updated: 2026-07-22 (Asia/Shanghai)
+Last updated: 2026-07-27 (Asia/Shanghai)
 
 ## 1. Purpose
 
@@ -55,17 +55,17 @@ Required engineering workflow for future changes:
 
 ### Frontend
 
-Current branch: `main`, synchronized with `origin/main` at or after documentation merge commit `86eaef1`.
+At final weight-feature handoff preparation, `main` was clean and synchronized with `origin/main` at `232c8f0`. The final handoff documentation merge is expected to be later than this feature baseline.
 
 The previous `project.config.json` and `project.private.config.json` modified status was caused only by Windows line-ending/index metadata. It was safely refreshed without changing file content. The frontend working tree was clean after cleanup.
 
 ### Backend
 
-Current branch: `main`, synchronized with `origin/main` at or after documentation merge commit `ce83347`.
+At final weight-feature handoff preparation, `main` was clean and synchronized with `origin/main` at `12a508c`. The final handoff documentation merge is expected to be later than this feature baseline.
 
 IntelliJ `.idea` metadata is no longer tracked. Local IDE files remain on disk and are ignored by Git. The backend working tree was clean after cleanup.
 
-Both repositories should contain only the local and remote `main` branch after a completed workflow. Calendar feature branches were deleted locally and remotely on 2026-07-21; documentation branches were cleaned after merge on 2026-07-22.
+Both repositories should contain only the local and remote `main` branch after this handoff workflow is merged and cleaned. Weight feature, release, README, and earlier documentation branches were deleted locally and remotely before final handoff preparation.
 
 ## 5. Backend
 
@@ -322,9 +322,12 @@ The documentation migration on 2026-07-22 exposed the following local workflow d
 - Run `git diff --check` before committing. During this migration it detected an extra blank line at the end of `HANDOFF.md`; normalize files to one final newline before commit.
 - Shared project documentation now has versioned copies in both repositories. Update both copies for cross-project facts and compare their relative file lists and SHA-256 hashes before merging. Repository-specific documentation can remain local to the affected repository.
 - The original `D:\AAA\develop\CalorieCalculator\doc` directory was retained as an unversioned migration backup. The repository copies are authoritative; do not update only the old top-level copy or use it as the sole handoff source.
+
 ## 14. Weight Tracking Sprint and production state
 
 The Weight Tracking Sprint was completed on 2026-07-22:
+
+Status: feature scope complete and closed. Start later functionality with a new plan, Sprint/Project, and Issues rather than extending this completed Sprint implicitly.
 
 - GitHub Project: `CalorieCalculator - Weight Tracking Sprint` (Project #4).
 - Backend Issue #10 / Pull Request #12 delivered persistence, APIs, migration, and 14 passing backend tests.
@@ -335,8 +338,10 @@ The Weight Tracking Sprint was completed on 2026-07-22:
 - Production was backed up to `backups/calorie_calculator-before-weight-20260722.dump` and the old image was retained as `calorie-calculator-backend:pre-weight-20260722`.
 - The migration and merged backend were deployed successfully. Public create, carry-forward, trend, delete, and cleanup acceptance checks passed.
 - The temporary production test record was deleted; the new table was empty after verification.
+- A later read-only check observed a new real record created after acceptance cleanup. It was treated as user data and left untouched; do not copy personal weight values into public Issues, PRs, or documentation.
 - PostgreSQL container ID `d03bd2712c2e4c2192776c43c0f7e929684f40e2e0cb8af4e2b1d6f56e5293ea` and creation time `2026-07-20T08:20:57.166504568Z` were unchanged across deployment.
-- The WeChat production build and compatibility check passed. Uploading the new Mini Program package remains a manual user-owned step.
+- The WeChat production build and compatibility check passed again from current `main` on 2026-07-27; `dist` was regenerated at approximately 15:36 Asia/Shanghai. Uploading or selecting an experience version remains a manual user-owned step, and no upload is claimed in this handoff.
+- Production `/healthz` returned HTTP 200 during the 2026-07-27 upload-readiness check.
 - The H5 build passed, but required in-app browser visual inspection could not start because of the documented Windows sandbox refresh failure; do not treat it as visually approved.
 
 Additional lessons from this iteration:
@@ -346,3 +351,13 @@ Additional lessons from this iteration:
 - A chained migration command can report `CREATE TABLE` and then fail in its verification segment. Verify independently before rerunning an idempotent migration.
 - H5 and WeChat builds share `dist`. Source-level tests must target their source suites explicitly; the generated-bundle compatibility test belongs after the matching WeChat build.
 - Trend APIs and renderers must retain null points before the first record so the horizontal date scale remains accurate.
+
+## 15. Baseline for the next feature
+
+- Body-weight tracking is complete across code, tests, production migration, backend deployment, documentation, and upload-ready WeChat build output.
+- Stable feature baselines before the final handoff-only merge are backend `12a508c` and frontend `232c8f0`; use the later merged `main` heads as the actual starting commits.
+- Backend tests last passed: 14. Frontend source tests last passed: 11. WeChat bundle compatibility last passed on 2026-07-27.
+- The latest generated `dist` is suitable for a manually uploaded experience version. A future frontend change must rerun `npm run verify:weapp` before upload.
+- Current experience testing still uses `http://124.221.90.240/api` and requires Developer Debugging. Formal release remains blocked by the domain, ICP, HTTPS, and WeChat legal-domain tasks in section 10.
+- Preserve all existing production food, daily-record, and body-weight data. Do not rerun destructive `schema.sql` against an existing database; use a dedicated non-destructive migration for any future schema change.
+- Before implementing the next feature, read this handoff, inspect both repository statuses, create the new plan under both `doc/plans` copies, then create the Sprint/Project and cross-repository Issues.
