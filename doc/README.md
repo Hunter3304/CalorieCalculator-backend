@@ -23,6 +23,7 @@ Read `HANDOFF.md` before starting work. Read the latest iteration document when 
 | 2026-07-22 | Versioned documentation mirrors and iteration plans | [`2026-07-22-versioned-documentation-and-plans.md`](iterations/2026-07-22-versioned-documentation-and-plans.md) |
 | 2026-07-22 | Body-weight tracking, trend chart, and production release | [2026-07-22-weight-tracking-and-production-release.md](iterations/2026-07-22-weight-tracking-and-production-release.md) |
 | 2026-07-27 | Body-circumference tracking and production release | [2026-07-27-body-circumference-tracking-and-production-release.md](iterations/2026-07-27-body-circumference-tracking-and-production-release.md) |
+| 2026-08-04 | HTTPS production rollout and formal-release blocker | [2026-08-04-https-production-and-formal-release-blocker.md](iterations/2026-08-04-https-production-and-formal-release-blocker.md) |
 
 The older entries were reconstructed from the engineering handoff and linked GitHub Issues/PRs. They summarize recorded feedback without presenting paraphrases as direct quotations.
 

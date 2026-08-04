@@ -265,33 +265,29 @@ Important distinction:
 - Experience/development builds may be tested on approved accounts with developer debugging enabled.
 - A formal public release must not depend on developer debugging.
 
-## 10. Domain, HTTPS, and formal release blocker
+## 10. Domain and HTTPS production release
 
-The production API still uses plain HTTP and a raw IP address:
+The previous raw-IP/formal-release blocker was resolved on 2026-08-04:
 
-```text
-http://124.221.90.240/api
-```
-
-This is acceptable only for current development/experience testing with debugging. Before formal public release:
-
-1. Complete domain purchase and real-name verification.
-2. Complete ICP filing for the domain because the server is in mainland China.
-3. Create an API subdomain such as `api.<domain>` pointing to `124.221.90.240`.
-4. Configure a valid HTTPS certificate and port 443 on the server.
-5. Add `https://api.<domain>` as the WeChat `request` legal domain (no `/api` path in the platform domain entry).
-6. Change `.env.production` to `https://api.<domain>/api`.
-7. Build with `npm run verify:weapp`.
-8. Test on a real device without developer debugging.
-9. Upload a new version, submit for WeChat review, and publish after approval.
-
-The user selected an inexpensive `.top` domain, but the full domain name has not been recorded in this conversation. Do not guess it. Ask the user for the exact registered domain and confirm real-name/ICP status before configuring DNS or TLS.
+- Registered and ICP-filed domain: `caloriecalculator.top`.
+- The public-security filing application was submitted; retain its later approval result in a future handoff update.
+- DNS A records for `@`, `www`, and `api` point to `124.221.90.240`.
+- The cloud firewall allows inbound TCP 80 and 443. PostgreSQL 5432 and Spring Boot 8080 remain closed publicly.
+- TrustAsia certificates cover `caloriecalculator.top`/`www.caloriecalculator.top` and `api.caloriecalculator.top`; the current certificates expire on 2026-11-02.
+- Certificates and private keys are stored outside Git and mounted read-only into Nginx. Never print or commit private-key contents.
+- `https://caloriecalculator.top` serves the filed public landing page and displays the ICP number.
+- `https://api.caloriecalculator.top/api` is the production Mini Program API base. HTTP domain requests redirect to HTTPS.
+- Backend Issue #21 / Pull Request #22 delivered TLS virtual hosts, port 443, certificate mounts, the landing page, and deployment documentation.
+- Frontend Issue #27 / Pull Request #28 changed `.env.production` to the HTTPS API and passed 16 source tests plus `verify:weapp`.
+- `https://api.caloriecalculator.top` is registered as the WeChat `request` legal domain without the `/api` path.
+- Experience version `1.1.2` was uploaded and verified on a real device without Developer Debugging.
+- Formal review was intentionally not submitted after discovering the unauthenticated shared-data architecture described in section 18.
 
 ## 11. Security and operational follow-ups
 
 Recommended future production hardening:
 
-- Configure HTTPS as described above.
+- Replace and redeploy the 90-day TLS certificates before 2026-11-02; automate renewal when practical.
 - Add scheduled PostgreSQL backups stored off the server.
 - Add Docker log rotation limits.
 - Apply regular Ubuntu security updates.
@@ -385,7 +381,44 @@ The Body Circumference Tracking Sprint was completed on 2026-07-27:
 - Use the latest merged `main` heads after the release-documentation PRs as the next starting commits.
 - Backend tests last passed: 23. Frontend source tests last passed: 16. WeChat bundle compatibility and H5 production build last passed on 2026-07-27.
 - The latest generated `dist` is suitable for manual WeChat Developer Tools testing/upload. A future frontend change must rerun `npm run verify:weapp`.
-- Current experience testing still uses `http://124.221.90.240/api` and requires Developer Debugging. Formal release remains blocked by the domain, ICP, HTTPS, and WeChat legal-domain tasks in section 10.
+- Experience version `1.1.2` uses `https://api.caloriecalculator.top/api` and works without Developer Debugging. Formal review is blocked by missing authentication and per-user data isolation, not by networking.
 - Preserve all existing production food, daily-record, body-weight, and body-circumference data. Never rerun destructive `schema.sql` against an existing database; use a dedicated non-destructive migration.
 - Before implementing another feature, read this handoff, inspect both repository statuses, create the synchronized plan, create the Project/Issues, and follow the Issue-branch-PR-merge-cleanup workflow.
 - At feature completion, update both affected root README files and the synchronized iteration/handoff records. Verify shared relative file lists and SHA-256 hashes before merging.
+
+## 17. HTTPS rollout problems and solutions
+
+The 2026-08-04 HTTPS rollout exposed several operational issues. Preserve these lessons:
+
+- In-app browser control and built-in `apply_patch` repeatedly failed with `windows sandbox: helper_unknown_error: setup refresh had errors`. This was local Codex infrastructure failure, not a Tencent Cloud or application failure. The user completed authenticated console-only actions such as DNS, firewall, certificate requests/downloads, WeChat legal-domain configuration, and experience upload. When patching remained unavailable after the required retry, exact-match PowerShell edits were used only in isolated worktrees and every edit was followed immediately by `git diff` and `git diff --check`.
+- VPN-dependent SSH, SCP, npm, Git, and GitHub commands were sometimes slow but healthy. Do not stop a running transfer merely because it is quiet; wait in bounded intervals, communicate status, and inspect authoritative remote state before retrying.
+- A GitHub merge appeared to run for several minutes, but the tool reported that automatic permission approval had timed out. The merge command never started. Read-only `gh pr view` confirmed both PRs were still `OPEN` and `CLEAN`; retrying one merge at a time completed in seconds. Keep approval timeouts distinct from command/VPN timeouts.
+- PowerShell expanded a remote POSIX `$(...)` expression locally before SSH, so the intended remote backup command never ran. Avoid unescaped command substitutions in double-quoted PowerShell SSH commands; prefer explicit validated paths or a separately transferred script.
+- A first remote cleanup attempt failed on nested quoting. The successful cleanup resolved the exact temporary directory with `realpath`, compared it to the expected `/tmp` path, and only then removed that single directory.
+- PowerShell applied `-notmatch` element-by-element to the multi-line `curl` response and falsely reported that the ICP number was missing. Join response lines into one string before applying a whole-document regex; direct public response and in-container checks confirmed the page was correct.
+- Certificate packages were kept outside both repositories, extracted under restricted Windows ACLs, checked for SANs/expiry and certificate-key modulus matches, uploaded to a random mode-700 server directory, loaded by a one-shot Nginx syntax test, installed with root-only key permissions, and then removed from the temporary server directory.
+- Before the Nginx switch, the current Compose/Nginx files and backend/PostgreSQL container IDs were recorded. The production change recreated only Nginx and included rollback commands. HTTPS root, `www`, health, real API, HTTP redirect, import blocking, ICP display, and closed 5432/8080 were verified externally.
+- The raw-IP HTTP route remains temporarily available for infrastructure rollback and older experience builds. Formal Mini Program traffic must use the HTTPS domain.
+- Free certificates are valid for 90 days. Tencent Cloud renewal alone does not update this self-managed Docker Nginx automatically; obtain the replacement certificate and redeploy it before expiry.
+
+## 18. Formal-release blocker: authentication and tenant isolation
+
+Do not submit the Mini Program for formal review or public release until this section is resolved:
+
+- The frontend does not call `wx.login`/`Taro.login` or attach a user session to API requests.
+- The backend has no `openid`, application user ID, authentication filter, session token, or authenticated principal.
+- `daily_records`, `body_weight_records`, `body_circumference_records`, and custom foods have no owner column. Reads, updates, and deletes operate only by date or record ID.
+- Consequently every public user would read and mutate the same food records, weight values, and circumference values. HTTPS protects transport but does not provide identity or authorization.
+
+The next implementation must:
+
+1. Exchange a WeChat login code for `openid` on the backend; keep AppSecret only in production server secrets.
+2. Create an application user/session model and require an authenticated session for personal-data APIs.
+3. Add non-null user ownership to daily records, weights, circumferences, and custom foods while keeping the shared food catalog global.
+4. Filter every personal-data select, insert, update, and delete by the authenticated user; never trust a user ID supplied by the client.
+5. Migrate existing production records non-destructively to the original owner after that owner is securely identified. Preserve all existing data and verify the migration before deployment.
+6. Provide privacy disclosure plus account/data deletion behavior appropriate for the information stored.
+7. Add two-user integration tests proving that users cannot read, update, or delete one another's records.
+8. Build and test another experience version without Developer Debugging before submitting formal review.
+
+Until then, experience version `1.1.2` is suitable only for the approved tester set, not public release.

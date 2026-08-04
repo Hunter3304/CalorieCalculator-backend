@@ -202,6 +202,8 @@ The body-circumference backend was deployed and verified on 2026-07-27. Before m
 
 The HTTP IP endpoint remains available temporarily for development and experience-version rollback. Formal Mini Program builds use the ICP-filed HTTPS API domain, which must also be registered as a WeChat request domain.
 
+The HTTPS experience version `1.1.2` works on a physical device without Developer Debugging. Do not submit it for formal public review yet: the current API has no WeChat login or authenticated user context, so daily records, body measurements, and custom foods are not isolated between users. The next release must add server-side WeChat code exchange, session authentication, owner-scoped persistence, non-destructive ownership migration for existing production data, privacy disclosure, and account/data deletion before public review.
+
 ## Troubleshooting
 
 - `Connection refused`: start PostgreSQL and verify port `5432`.
