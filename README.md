@@ -198,7 +198,7 @@ The production stack runs on Tencent Cloud Lighthouse with Docker Compose:
 
 Deployment and rollback commands are documented in [`deploy/README.md`](deploy/README.md). Never print or commit `.env.production`, and never run `docker compose down --volumes` in production.
 
-The body-circumference backend was deployed and verified on 2026-07-27. Before migration, production was backed up to `backups/calorie_calculator-before-circumference-20260727.dump` and the previous backend image was retained as `calorie-calculator-backend:pre-circumference-20260727`. Only the backend container was recreated; the PostgreSQL and Nginx container IDs remained unchanged. Health, empty snapshot, partial save, independent carry-forward, field-specific trend, clear fallback, delete, cleanup, regression, private-port, and public import-blocking checks passed.
+The body-circumference backend was deployed and verified on 2026-07-27. Before migration, a production database backup was created and verified, and the previous backend image was retained for rollback. Only the backend container was recreated; the PostgreSQL and Nginx container IDs remained unchanged. Health, empty snapshot, partial save, independent carry-forward, field-specific trend, clear fallback, delete, cleanup, regression, private-port, and public import-blocking checks passed.
 
 The HTTP IP endpoint remains available temporarily for development and experience-version rollback. Formal Mini Program builds use the ICP-filed HTTPS API domain, which must also be registered as a WeChat request domain.
 

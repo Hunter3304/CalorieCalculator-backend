@@ -41,16 +41,15 @@ Release tracking uses backend Issue [#19](https://github.com/Hunter3304/CalorieC
 
 ## Production deployment and rollback
 
-- Verified PostgreSQL backup: `/opt/calorie-calculator/backups/calorie_calculator-before-circumference-20260727.dump`.
-- Backup size: 54,123 bytes; mode 600; `pg_restore --list` passed.
-- Rollback image: `calorie-calculator-backend:pre-circumference-20260727`.
-- Rollback image ID: `sha256:0921a1b340f06c69669762c3278f62a5c0b88050b22f24c92b3815c7014796f7`.
-- Deployment archive SHA-256 matched locally and remotely: `784a8c9bc478a3f1d41cd361f3ebdf32d9eb2215f670cd3582ee1031894a00ae`.
+- A custom-format PostgreSQL backup was created before migration.
+- The backup was stored with mode 600 and verified with `pg_restore --list`.
+- The previous backend image was tagged and retained for rollback.
+- The deployment archive checksum matched locally and remotely before extraction.
 - The circumference migration succeeded.
 - Only the backend container was recreated.
-- PostgreSQL container stayed `d03bd2712c2e4c2192776c43c0f7e929684f40e2e0cb8af4e2b1d6f56e5293ea`.
-- Nginx container stayed `1784b7259b79f6cbc8c05d27bb103c60102ba220f6b261205c2dbef87ac9ffc5`.
-- New backend container was `3acb56560cb89fa9349622621270c405ab7d5a5de8782303984538a822903b0e`.
+- The PostgreSQL container and persistent data volume remained unchanged.
+- The Nginx container remained unchanged.
+- Only the backend container was recreated from the merged release.
 - All containers were healthy/running.
 
 Production API acceptance passed for empty snapshot, partial values, independent carry-forward, all-blank no-op, measurement trend, clear fallback, delete, and cleanup. Regression checks confirmed health, the food catalog, calendar, weight endpoint, import blocking, and closed public database/backend ports. Temporary acceptance data was deleted. No personal measurements were copied into versioned or public documentation.

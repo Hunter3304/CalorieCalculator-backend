@@ -367,13 +367,13 @@ The Body Circumference Tracking Sprint was completed on 2026-07-27:
 - Frontend Issues #23 and #24 / Pull Request #25 delivered the homepage action and summary, sparse editor, selector-based trend page, and tests. Merge commit: `a86e8d3849ca2458416d6837fff4c7a5fa66fa62`.
 - Backend Issue #19 tracks production and release documentation. Frontend Issue #26 records the public deployment, rollback, container, and WeChat release summary.
 - Backend verification passed with 23 Maven tests and a clean package. Frontend verification passed with 16 source tests, ESLint, Stylelint, H5 build, and `verify:weapp`.
-- The production backup is `/opt/calorie-calculator/backups/calorie_calculator-before-circumference-20260727.dump`; it was verified with `pg_restore --list` and stored with mode 600.
-- Rollback image `calorie-calculator-backend:pre-circumference-20260727` points to image ID `sha256:0921a1b340f06c69669762c3278f62a5c0b88050b22f24c92b3815c7014796f7`.
-- The deployment archive SHA-256 was `784a8c9bc478a3f1d41cd361f3ebdf32d9eb2215f670cd3582ee1031894a00ae` locally and remotely.
+- A custom-format production database backup was created before migration, verified with `pg_restore --list`, and stored with mode 600.
+- The previous backend image was tagged and retained for immediate rollback.
+- The deployment archive checksum matched locally and remotely before extraction.
 - The non-destructive migration succeeded and only the backend container was recreated.
-- PostgreSQL container ID remained `d03bd2712c2e4c2192776c43c0f7e929684f40e2e0cb8af4e2b1d6f56e5293ea`.
-- Nginx container ID remained `1784b7259b79f6cbc8c05d27bb103c60102ba220f6b261205c2dbef87ac9ffc5`.
-- Deployed backend container ID was `3acb56560cb89fa9349622621270c405ab7d5a5de8782303984538a822903b0e`.
+- The PostgreSQL container and persistent data volume remained unchanged.
+- The Nginx container remained unchanged.
+- Only the backend container was recreated from the merged release.
 - All three containers were healthy/running. Public ports 5432 and 8080 remained closed, `/api/import/json` remained blocked, and `/healthz` passed.
 - Production API acceptance covered empty state, partial input, independent carry-forward, all-blank no-op, trend, clear fallback, delete, and cleanup. Temporary acceptance records were deleted.
 - Existing user food, daily-record, weight, and circumference data must never be printed in public Issues or documentation.
