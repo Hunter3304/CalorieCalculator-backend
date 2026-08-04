@@ -1,9 +1,18 @@
 # WeChat Authentication and User Isolation Plan
 
 Date: 2026-08-04
-Status: In progress
+Status: Implementation verified locally; production rollout pending
 Repositories: backend and frontend
-GitHub Issues: pending creation after external-push authorization
+GitHub Issues: backend [#24](https://github.com/Hunter3304/CalorieCalculator-backend/issues/24), frontend [#30](https://github.com/Hunter3304/CalorieCalculator-frontend/issues/30)
+GitHub Pull Requests: backend [#25](https://github.com/Hunter3304/CalorieCalculator-backend/pull/25), frontend [#31](https://github.com/Hunter3304/CalorieCalculator-frontend/pull/31)
+## Implementation progress (2026-08-05)
+
+- Backend authentication, opaque hashed sessions, ownership schema/migration, guarded legacy claim, owner-scoped mappers/services/controllers, logout, account metadata, and transactional account deletion are implemented.
+- Frontend single-flight login, Bearer request wrapper, one-time 401 recovery, privacy/account page, logout, and confirmed account deletion are implemented.
+- Backend verification: 33 tests and `clean package` passed.
+- Frontend verification: 19 tests, targeted ESLint/Stylelint, `verify:weapp`, and H5 production build passed. H5 retains the known 337 KiB entrypoint-size warning.
+- Disposable PostgreSQL acceptance passed against the legacy schema: four legacy row types were preserved and claimed, two owners stored colliding dates, and the guarded claim rejected both zero and two real users.
+- Still pending: PR merge, production PostgreSQL backup/migration, private production secret entry, deployment, original-owner legacy claim, two-account physical isolation acceptance, privacy-guide configuration, experience upload, and formal review.
 
 ## Release gate
 
@@ -61,7 +70,7 @@ Experience version `1.1.2` must not be submitted for public review. Formal revie
 
 ## Known external/manual gates
 
-- GitHub pushes, Issues, and PRs require explicit confirmation that the repositories are approved destinations for the deployment documentation.
+- GitHub repository authorization is complete; Issues #24 and #30 track implementation.
 - The AppSecret must be entered privately by the user on the server.
 - The original owner must perform the first authenticated Mini Program login before legacy data is claimed.
 - Privacy-guide configuration, experience upload, formal review submission, and final publish require the user's authenticated WeChat console/Developer Tools session.

@@ -38,7 +38,39 @@ cp .env.production.example .env.production
 chmod 600 .env.production
 ```
 
-Replace `POSTGRES_PASSWORD` with a long random value. Never commit `.env.production`.
+Replace `POSTGRES_PASSWORD`, `WECHAT_APP_ID`, and `WECHAT_APP_SECRET` with the real production values. Enter the AppSecret directly in the protected server file; never send it in chat, print it, or commit `.env.production`. Keep `AUTH_SESSION_DAYS=30` unless a deliberate session-policy change is required.
+
+## Apply the authentication and ownership migration
+
+Existing installations must use the additive migration below. Never run `schema.sql` against the existing production database.
+
+1. Start a maintenance window and prevent writes from the old unauthenticated client.
+2. Create a custom-format PostgreSQL backup in a new, restricted file and verify it with `pg_restore --list`.
+3. Retain the known-good backend image and current Compose configuration.
+4. Apply the migration with `ON_ERROR_STOP=1`, then deploy the authenticated backend immediately. The old backend cannot safely write after the new non-null owner columns are installed.
+
+```sh
+docker compose --env-file .env.production -f docker-compose.production.yml exec -T postgres \
+  sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" --format=custom' > calorie_calculator-before-auth.dump
+
+pg_restore --list calorie_calculator-before-auth.dump >/dev/null
+
+docker compose --env-file .env.production -f docker-compose.production.yml exec -T postgres \
+  sh -c 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"' \
+  < src/main/resources/sql/migrations/2026-08-05-add-authentication-and-ownership.sql
+
+docker compose --env-file .env.production -f docker-compose.production.yml up -d --build --no-deps backend
+```
+
+Do not run `deploy/claim-legacy-owner.sql` during the initial migration. First upload the new experience build and have the original owner complete one successful login. Before any second account logs in, verify that there is exactly one non-legacy `app_users` row, then run the guarded claim script:
+
+```sh
+docker compose --env-file .env.production -f docker-compose.production.yml exec -T postgres \
+  sh -c 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"' \
+  < deploy/claim-legacy-owner.sql
+```
+
+The script aborts unless exactly one real user exists. Compare non-sensitive pre/post row counts and verify the original owner's records in the client before inviting the second tester. If migration or acceptance fails, stop the release and restore the retained code/configuration and database backup as a compatible set; do not roll old code back alone across the migrated schema.
 
 ## Apply the body-weight migration
 

@@ -23,10 +23,10 @@ public class BodyWeightService {
         this.bodyWeightMapper = bodyWeightMapper;
     }
 
-    public BodyWeightSnapshotDto getSnapshot(LocalDate selectedDate) {
+    public BodyWeightSnapshotDto getSnapshot(Long userId, LocalDate selectedDate) {
         requireDate(selectedDate);
-        LocalDate firstRecordDate = bodyWeightMapper.findFirstRecordDate();
-        BodyWeightRecord record = bodyWeightMapper.findLatestOnOrBefore(selectedDate);
+        LocalDate firstRecordDate = bodyWeightMapper.findFirstRecordDate(userId);
+        BodyWeightRecord record = bodyWeightMapper.findLatestOnOrBefore(userId, selectedDate);
         if (record == null) {
             return new BodyWeightSnapshotDto(selectedDate, null, null, null, false, firstRecordDate);
         }
@@ -34,30 +34,34 @@ public class BodyWeightService {
                 record.getWeightKg(), selectedDate.equals(record.getRecordDate()), firstRecordDate);
     }
 
-    public BodyWeightSnapshotDto save(LocalDate recordDate, BigDecimal weightKg) {
+    public BodyWeightSnapshotDto save(Long userId, LocalDate recordDate, BigDecimal weightKg) {
         validateRecordDate(recordDate, LocalDate.now());
         validateWeight(weightKg);
-        bodyWeightMapper.upsert(recordDate, weightKg);
-        return getSnapshot(recordDate);
+        bodyWeightMapper.upsert(userId, recordDate, weightKg);
+        return getSnapshot(userId, recordDate);
     }
 
-    public BodyWeightSnapshotDto update(Integer id, BigDecimal weightKg) {
+    public BodyWeightSnapshotDto update(Long userId, Integer id, BigDecimal weightKg) {
         validateWeight(weightKg);
-        BodyWeightRecord existing = requireRecord(id);
-        bodyWeightMapper.updateWeight(id, weightKg);
-        return getSnapshot(existing.getRecordDate());
+        BodyWeightRecord existing = requireRecord(userId, id);
+        if (bodyWeightMapper.updateWeight(userId, id, weightKg) == 0) {
+            throw new NoSuchElementException("Weight record not found");
+        }
+        return getSnapshot(userId, existing.getRecordDate());
     }
 
-    public void delete(Integer id) {
-        requireRecord(id);
-        bodyWeightMapper.deleteById(id);
+    public void delete(Long userId, Integer id) {
+        requireRecord(userId, id);
+        if (bodyWeightMapper.deleteById(userId, id) == 0) {
+            throw new NoSuchElementException("Weight record not found");
+        }
     }
 
-    public BodyWeightTrendDto getTrend(LocalDate startDate, LocalDate endDate) {
-        return getTrend(startDate, endDate, LocalDate.now());
+    public BodyWeightTrendDto getTrend(Long userId, LocalDate startDate, LocalDate endDate) {
+        return getTrend(userId, startDate, endDate, LocalDate.now());
     }
 
-    BodyWeightTrendDto getTrend(LocalDate startDate, LocalDate endDate, LocalDate today) {
+    BodyWeightTrendDto getTrend(Long userId, LocalDate startDate, LocalDate endDate, LocalDate today) {
         requireDate(startDate);
         requireDate(endDate);
         if (endDate.isAfter(today)) {
@@ -70,13 +74,13 @@ public class BodyWeightService {
             throw new IllegalArgumentException("Trend range cannot exceed 365 days");
         }
 
-        LocalDate firstRecordDate = bodyWeightMapper.findFirstRecordDate();
+        LocalDate firstRecordDate = bodyWeightMapper.findFirstRecordDate(userId);
         if (firstRecordDate == null || endDate.isBefore(firstRecordDate)) {
             return new BodyWeightTrendDto(startDate, endDate, firstRecordDate, List.of());
         }
 
-        BodyWeightRecord current = bodyWeightMapper.findLatestOnOrBefore(startDate);
-        List<BodyWeightRecord> records = bodyWeightMapper.findBetween(startDate, endDate);
+        BodyWeightRecord current = bodyWeightMapper.findLatestOnOrBefore(userId, startDate);
+        List<BodyWeightRecord> records = bodyWeightMapper.findBetween(userId, startDate, endDate);
         List<BodyWeightTrendPointDto> points = new ArrayList<>();
         int recordIndex = 0;
         for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
@@ -109,11 +113,11 @@ public class BodyWeightService {
         }
     }
 
-    private BodyWeightRecord requireRecord(Integer id) {
+    private BodyWeightRecord requireRecord(Long userId, Integer id) {
         if (id == null) {
             throw new IllegalArgumentException("Weight record id is required");
         }
-        BodyWeightRecord record = bodyWeightMapper.findById(id);
+        BodyWeightRecord record = bodyWeightMapper.findById(userId, id);
         if (record == null) {
             throw new NoSuchElementException("Weight record not found");
         }

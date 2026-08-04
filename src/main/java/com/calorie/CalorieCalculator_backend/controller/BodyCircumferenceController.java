@@ -1,5 +1,6 @@
 package com.calorie.CalorieCalculator_backend.controller;
 
+import com.calorie.CalorieCalculator_backend.auth.CurrentUserAttributes;
 import com.calorie.CalorieCalculator_backend.dto.BodyCircumferenceRequest;
 import com.calorie.CalorieCalculator_backend.dto.BodyCircumferenceSnapshotDto;
 import com.calorie.CalorieCalculator_backend.dto.BodyCircumferenceTrendDto;
@@ -9,11 +10,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-import java.util.NoSuchElementException;
 
 @RestController
 @RequestMapping("/api/circumferences")
-@CrossOrigin(origins = "*")
 public class BodyCircumferenceController {
     private final BodyCircumferenceService service;
 
@@ -23,38 +22,33 @@ public class BodyCircumferenceController {
 
     @GetMapping("/{date}")
     public ResponseEntity<BodyCircumferenceSnapshotDto> getSnapshot(
+            @RequestAttribute(CurrentUserAttributes.USER_ID) Long userId,
             @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-        return ResponseEntity.ok(service.getSnapshot(date));
+        return ResponseEntity.ok(service.getSnapshot(userId, date));
     }
 
     @PutMapping("/{date}")
     public ResponseEntity<BodyCircumferenceSnapshotDto> save(
+            @RequestAttribute(CurrentUserAttributes.USER_ID) Long userId,
             @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @RequestBody BodyCircumferenceRequest request) {
-        return ResponseEntity.ok(service.save(date, request));
+        return ResponseEntity.ok(service.save(userId, date, request));
     }
 
     @DeleteMapping("/records/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Integer id) {
-        service.delete(id);
+    public ResponseEntity<Void> delete(
+            @RequestAttribute(CurrentUserAttributes.USER_ID) Long userId,
+            @PathVariable Integer id) {
+        service.delete(userId, id);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/trend")
     public ResponseEntity<BodyCircumferenceTrendDto> getTrend(
+            @RequestAttribute(CurrentUserAttributes.USER_ID) Long userId,
             @RequestParam String type,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
-        return ResponseEntity.ok(service.getTrend(type, startDate, endDate));
-    }
-
-    @ExceptionHandler({IllegalArgumentException.class, java.time.format.DateTimeParseException.class})
-    public ResponseEntity<String> handleInvalidRequest(RuntimeException exception) {
-        return ResponseEntity.badRequest().body(exception.getMessage());
-    }
-
-    @ExceptionHandler(NoSuchElementException.class)
-    public ResponseEntity<String> handleMissingRecord(NoSuchElementException exception) {
-        return ResponseEntity.status(404).body(exception.getMessage());
+        return ResponseEntity.ok(service.getTrend(userId, type, startDate, endDate));
     }
 }

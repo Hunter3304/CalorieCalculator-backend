@@ -1,6 +1,6 @@
 # CalorieCalculator Engineering Handoff
 
-Last updated: 2026-08-04 (Asia/Shanghai)
+Last updated: 2026-08-05 (Asia/Shanghai)
 
 ## 1. Purpose
 
@@ -55,17 +55,17 @@ Required engineering workflow for future changes:
 
 ### Frontend
 
-At final weight-feature handoff preparation, `main` was clean and synchronized with `origin/main` at `232c8f0`. The final handoff documentation merge is expected to be later than this feature baseline.
-
-The previous `project.config.json` and `project.private.config.json` modified status was caused only by Windows line-ending/index metadata. It was safely refreshed without changing file content. The frontend working tree was clean after cleanup.
+- Active implementation branch: `feature/issue-30-auth-privacy`.
+- GitHub Issue [#30](https://github.com/Hunter3304/CalorieCalculator-frontend/issues/30) and Pull Request [#31](https://github.com/Hunter3304/CalorieCalculator-frontend/pull/31) track automatic login, authenticated requests, privacy disclosure, logout, and account deletion.
+- The working tree contains only the in-progress authentication/privacy implementation and synchronized documentation changes expected for that Issue. Preserve any later unrelated user changes.
 
 ### Backend
 
-At final weight-feature handoff preparation, `main` was clean and synchronized with `origin/main` at `12a508c`. The final handoff documentation merge is expected to be later than this feature baseline.
+- Active implementation branch: `feature/issue-24-wechat-auth-isolation`.
+- GitHub Issue [#24](https://github.com/Hunter3304/CalorieCalculator-backend/issues/24) and Pull Request [#25](https://github.com/Hunter3304/CalorieCalculator-backend/pull/25) track server-side WeChat login, hashed sessions, owner-scoped persistence, migration, and account deletion.
+- The working tree contains only the in-progress authentication/isolation implementation and documentation changes expected for that Issue. Preserve any later unrelated user changes.
 
-IntelliJ `.idea` metadata is no longer tracked. Local IDE files remain on disk and are ignored by Git. The backend working tree was clean after cleanup.
-
-Both repositories should contain only the local and remote `main` branch after this handoff workflow is merged and cleaned. Weight feature, release, README, and earlier documentation branches were deleted locally and remotely before final handoff preparation.
+Do not switch either repository to `main` or delete these branches until the corresponding Pull Request has been reviewed and merged.
 
 ## 5. Backend
 
@@ -377,13 +377,11 @@ The Body Circumference Tracking Sprint was completed on 2026-07-27:
 
 ## 16. Baseline for the next feature
 
-- Food, calendar, body-weight, and body-circumference functionality is complete across code, automated verification, production migration/deployment, and versioned documentation.
-- Use the latest merged `main` heads after the release-documentation PRs as the next starting commits.
-- Backend tests last passed: 23. Frontend source tests last passed: 16. WeChat bundle compatibility and H5 production build last passed on 2026-07-27.
-- The latest generated `dist` is suitable for manual WeChat Developer Tools testing/upload. A future frontend change must rerun `npm run verify:weapp`.
-- Experience version `1.1.2` uses `https://api.caloriecalculator.top/api` and works without Developer Debugging. Formal review is blocked by missing authentication and per-user data isolation, not by networking.
-- Preserve all existing production food, daily-record, body-weight, and body-circumference data. Never rerun destructive `schema.sql` against an existing database; use a dedicated non-destructive migration.
-- Before implementing another feature, read this handoff, inspect both repository statuses, create the synchronized plan, create the Project/Issues, and follow the Issue-branch-PR-merge-cleanup workflow.
+- Food, calendar, body-weight, and body-circumference functionality remains complete across code, automated verification, and the current production deployment.
+- The authentication/isolation replacement is implemented on the active feature branches but is not yet in production. Backend verification passes 33 tests plus `clean package`; frontend verification passes 19 source tests, targeted ESLint/Stylelint, `verify:weapp`, and the H5 production build.
+- Experience version `1.1.2` still uses `https://api.caloriecalculator.top/api` and works without Developer Debugging, but it predates authentication and remains suitable only for approved testers.
+- Preserve all existing production food, daily-record, body-weight, and body-circumference data. Never rerun destructive `schema.sql` against an existing database; use the additive authentication/ownership migration only after a verified backup.
+- The next continuation should finish PR review/merge, privately configure the production AppID/AppSecret, deploy the migration and backend in a maintenance window, let the original owner log in first, run the guarded legacy claim, and complete two-user acceptance before formal review.
 - At feature completion, update both affected root README files and the synchronized iteration/handoff records. Verify shared relative file lists and SHA-256 hashes before merging.
 
 ## 17. HTTPS rollout problems and solutions
@@ -401,24 +399,39 @@ The 2026-08-04 HTTPS rollout exposed several operational issues. Preserve these 
 - The raw-IP HTTP route remains temporarily available for infrastructure rollback and older experience builds. Formal Mini Program traffic must use the HTTPS domain.
 - Free certificates are valid for 90 days. Tencent Cloud renewal alone does not update this self-managed Docker Nginx automatically; obtain the replacement certificate and redeploy it before expiry.
 
-## 18. Formal-release blocker: authentication and tenant isolation
+## 18. Authentication and tenant-isolation release status
 
-Do not submit the Mini Program for formal review or public release until this section is resolved:
+The code-level formal-release blocker was implemented and locally verified on 2026-08-05, but production rollout and physical two-user acceptance remain release gates.
 
-- The frontend does not call `wx.login`/`Taro.login` or attach a user session to API requests.
-- The backend has no `openid`, application user ID, authentication filter, session token, or authenticated principal.
-- `daily_records`, `body_weight_records`, `body_circumference_records`, and custom foods have no owner column. Reads, updates, and deletes operate only by date or record ID.
-- Consequently every public user would read and mutate the same food records, weight values, and circumference values. HTTPS protects transport but does not provide identity or authorization.
+Implemented backend behavior:
 
-The next implementation must:
+- `POST /api/auth/wechat` performs server-only WeChat `code2Session` exchange. AppID/AppSecret come from the server environment and must never be committed, printed, or sent in chat.
+- The backend issues a 32-byte opaque session token, stores only its SHA-256 hash with expiry, and requires `Authorization: Bearer <token>` for all other `/api/**` routes.
+- `app_users`, `app_sessions`, and `owner_user_id` support per-user isolation. Daily records, weight, circumference, custom foods, calendar bounds, carry-forward, trends, and per-user last-used food ordering are owner-scoped using the authenticated server-derived user ID.
+- Cross-user update/delete-by-ID returns no matching row. Public food catalog rows remain shared; custom foods remain private.
+- `GET /api/account`, `DELETE /api/auth/session`, and transactional `DELETE /api/account` provide non-sensitive metadata, logout, and permanent deletion of sessions and all owned personal data.
+- `2026-08-05-add-authentication-and-ownership.sql` preserves existing rows under one migration-only legacy owner. `deploy/claim-legacy-owner.sql` aborts unless exactly one real user exists, moves all legacy rows transactionally, verifies no legacy-owned rows remain, and deletes the legacy owner.
 
-1. Exchange a WeChat login code for `openid` on the backend; keep AppSecret only in production server secrets.
-2. Create an application user/session model and require an authenticated session for personal-data APIs.
-3. Add non-null user ownership to daily records, weights, circumferences, and custom foods while keeping the shared food catalog global.
-4. Filter every personal-data select, insert, update, and delete by the authenticated user; never trust a user ID supplied by the client.
-5. Migrate existing production records non-destructively to the original owner after that owner is securely identified. Preserve all existing data and verify the migration before deployment.
-6. Provide privacy disclosure plus account/data deletion behavior appropriate for the information stored.
-7. Add two-user integration tests proving that users cannot read, update, or delete one another's records.
-8. Build and test another experience version without Developer Debugging before submitting formal review.
+Implemented frontend behavior:
 
-Until then, experience version `1.1.2` is suitable only for the approved tester set, not public release.
+- `Taro.login()` runs through a single-flight session manager; the client persists only the opaque app token, never a WeChat code or OpenID.
+- Every API call uses one authenticated wrapper. A 401 clears the token, performs one controlled re-login, retries once, and then surfaces the error without looping.
+- The new Privacy & Account page states what data is stored, confirms that nickname/avatar/phone are not read, supports logout, and requires explicit confirmation before deleting the account and all personal data.
+
+Verification completed locally:
+
+- Backend: 33 Maven tests passed; `mvnw.cmd clean package` succeeded.
+- Frontend: 19 tests passed; targeted ESLint and Stylelint passed; `verify:weapp` passed; H5 production build passed with the existing 337 KiB entrypoint-size warning.
+- Static SQL audit confirmed owner predicates on all personal reads/writes/updates/deletes.
+- A disposable PostgreSQL database loaded from the `origin/main` legacy schema preserved all four representative legacy row types through migration and claim; two owners successfully stored colliding dates. Separate guard tests confirmed the claim aborts with both zero and two real users. Both temporary databases were removed. Production migration is still pending.
+
+Remaining mandatory release gates:
+
+1. Review and merge backend Issue #24 and frontend Issue #30 Pull Requests.
+2. Have the user enter the Mini Program AppSecret privately in the mode-600 production environment file; never transmit it through chat or Git.
+3. Back up and verify PostgreSQL, retain compatible rollback artifacts, apply the additive migration, and deploy the authenticated backend during a maintenance window.
+4. Upload a new experience build. The original owner must log in before any second account, then the guarded legacy-claim script may run.
+5. Verify the original data and run physical acceptance using two different WeChat accounts with colliding dates/different values, including list/read/update/delete/carry-forward/trend isolation and account deletion.
+6. Complete the WeChat privacy-protection guide and physical-device regression without Developer Debugging. Only the accepted new experience version may be submitted for formal review.
+
+Until all six gates pass, do not submit version `1.1.2` or the new build for formal public review.

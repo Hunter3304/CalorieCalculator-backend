@@ -28,13 +28,16 @@ services:
       PGDATABASE: ${POSTGRES_DB:-calorie_calculator}
       PGUSER: ${POSTGRES_USER:-calorie_app}
       PGPASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      WECHAT_APP_ID: ${WECHAT_APP_ID:?WECHAT_APP_ID is required}
+      WECHAT_APP_SECRET: ${WECHAT_APP_SECRET:?WECHAT_APP_SECRET is required}
+      AUTH_SESSION_DAYS: ${AUTH_SESSION_DAYS:-30}
       SQL_INIT_MODE: never
       JAVA_TOOL_OPTIONS: "-XX:InitialRAMPercentage=25 -XX:MaxRAMPercentage=65 -XX:+UseG1GC -Dfile.encoding=UTF-8"
     depends_on:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8080/api/foods/page?page=1&size=1"]
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8080/healthz"]
       interval: 15s
       timeout: 5s
       retries: 10
