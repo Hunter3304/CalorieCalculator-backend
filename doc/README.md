@@ -22,6 +22,8 @@ Read `HANDOFF.md` before starting work. Read the latest iteration document when 
 | 2026-07-22 | Calendar backend production deployment and documentation refresh | [`2026-07-22-calendar-production-deployment.md`](iterations/2026-07-22-calendar-production-deployment.md) |
 | 2026-07-22 | Versioned documentation mirrors and iteration plans | [`2026-07-22-versioned-documentation-and-plans.md`](iterations/2026-07-22-versioned-documentation-and-plans.md) |
 | 2026-07-22 | Body-weight tracking, trend chart, and production release | [2026-07-22-weight-tracking-and-production-release.md](iterations/2026-07-22-weight-tracking-and-production-release.md) |
+| 2026-07-27 | Body-circumference tracking and production release | [2026-07-27-body-circumference-tracking-and-production-release.md](iterations/2026-07-27-body-circumference-tracking-and-production-release.md) |
+| 2026-08-04 | HTTPS production rollout and formal-release blocker | [2026-08-04-https-production-and-formal-release-blocker.md](iterations/2026-08-04-https-production-and-formal-release-blocker.md) |
 
 The older entries were reconstructed from the engineering handoff and linked GitHub Issues/PRs. They summarize recorded feedback without presenting paraphrases as direct quotations.
 
@@ -45,4 +47,4 @@ Each document should include:
 6. Deployment or release status.
 7. Remaining risks and next actions.
 
-After completing an iteration, update both this index and `HANDOFF.md`.
+After completing an iteration, update every affected repository's root `README.md`, this index, and `HANDOFF.md`.

@@ -108,7 +108,7 @@ Invoke-RestMethod "http://localhost:8080/api/foods/page?page=1&size=10"
 
 Tests that start the Spring context require a reachable PostgreSQL database unless a test-specific datasource is configured.
 
-The current suite contains 14 tests, including eight body-weight service tests covering validation, effective-record lookup, trend behavior, update, and deletion.
+The current suite contains 23 tests. In addition to the body-weight coverage, the circumference service tests cover sparse values, independent carry-forward, clearing, deletion, validation, and field-specific trends.
 
 ## API overview
 
@@ -198,9 +198,11 @@ The production stack runs on Tencent Cloud Lighthouse with Docker Compose:
 
 Deployment and rollback commands are documented in [`deploy/README.md`](deploy/README.md). Never print or commit `.env.production`, and never run `docker compose down --volumes` in production.
 
-The calendar and body-weight backends were deployed and verified on 2026-07-22. The weight release used a pre-migration PostgreSQL backup, retained the previous backend image for rollback, and recreated only the backend container; the existing PostgreSQL container and volume remained in place. Health, snapshot, carry-forward, trend, delete, cleanup, and public import-blocking checks passed.
+The body-circumference backend was deployed and verified on 2026-07-27. Before migration, a production database backup was created and verified, and the previous backend image was retained for rollback. Only the backend container was recreated; the PostgreSQL and Nginx container IDs remained unchanged. Health, empty snapshot, partial save, independent carry-forward, field-specific trend, clear fallback, delete, cleanup, regression, private-port, and public import-blocking checks passed.
 
 The HTTP IP endpoint remains available temporarily for development and experience-version rollback. Formal Mini Program builds use the ICP-filed HTTPS API domain, which must also be registered as a WeChat request domain.
+
+The HTTPS experience version `1.1.2` works on a physical device without Developer Debugging. Do not submit it for formal public review yet: the current API has no WeChat login or authenticated user context, so daily records, body measurements, and custom foods are not isolated between users. The next release must add server-side WeChat code exchange, session authentication, owner-scoped persistence, non-destructive ownership migration for existing production data, privacy disclosure, and account/data deletion before public review.
 
 ## Troubleshooting
 

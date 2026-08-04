@@ -1,6 +1,6 @@
 # CalorieCalculator Engineering Handoff
 
-Last updated: 2026-07-27 (Asia/Shanghai)
+Last updated: 2026-08-04 (Asia/Shanghai)
 
 ## 1. Purpose
 
@@ -265,33 +265,29 @@ Important distinction:
 - Experience/development builds may be tested on approved accounts with developer debugging enabled.
 - A formal public release must not depend on developer debugging.
 
-## 10. Domain, HTTPS, and formal release blocker
+## 10. Domain and HTTPS production release
 
-The production API still uses plain HTTP and a raw IP address:
+The previous raw-IP/formal-release blocker was resolved on 2026-08-04:
 
-```text
-http://124.221.90.240/api
-```
-
-This is acceptable only for current development/experience testing with debugging. Before formal public release:
-
-1. Complete domain purchase and real-name verification.
-2. Complete ICP filing for the domain because the server is in mainland China.
-3. Create an API subdomain such as `api.<domain>` pointing to `124.221.90.240`.
-4. Configure a valid HTTPS certificate and port 443 on the server.
-5. Add `https://api.<domain>` as the WeChat `request` legal domain (no `/api` path in the platform domain entry).
-6. Change `.env.production` to `https://api.<domain>/api`.
-7. Build with `npm run verify:weapp`.
-8. Test on a real device without developer debugging.
-9. Upload a new version, submit for WeChat review, and publish after approval.
-
-The user selected an inexpensive `.top` domain, but the full domain name has not been recorded in this conversation. Do not guess it. Ask the user for the exact registered domain and confirm real-name/ICP status before configuring DNS or TLS.
+- Registered and ICP-filed domain: `caloriecalculator.top`.
+- The public-security filing application was submitted; retain its later approval result in a future handoff update.
+- DNS A records for `@`, `www`, and `api` point to `124.221.90.240`.
+- The cloud firewall allows inbound TCP 80 and 443. PostgreSQL 5432 and Spring Boot 8080 remain closed publicly.
+- TrustAsia certificates cover `caloriecalculator.top`/`www.caloriecalculator.top` and `api.caloriecalculator.top`; the current certificates expire on 2026-11-02.
+- Certificates and private keys are stored outside Git and mounted read-only into Nginx. Never print or commit private-key contents.
+- `https://caloriecalculator.top` serves the filed public landing page and displays the ICP number.
+- `https://api.caloriecalculator.top/api` is the production Mini Program API base. HTTP domain requests redirect to HTTPS.
+- Backend Issue #21 / Pull Request #22 delivered TLS virtual hosts, port 443, certificate mounts, the landing page, and deployment documentation.
+- Frontend Issue #27 / Pull Request #28 changed `.env.production` to the HTTPS API and passed 16 source tests plus `verify:weapp`.
+- `https://api.caloriecalculator.top` is registered as the WeChat `request` legal domain without the `/api` path.
+- Experience version `1.1.2` was uploaded and verified on a real device without Developer Debugging.
+- Formal review was intentionally not submitted after discovering the unauthenticated shared-data architecture described in section 18.
 
 ## 11. Security and operational follow-ups
 
 Recommended future production hardening:
 
-- Configure HTTPS as described above.
+- Replace and redeploy the 90-day TLS certificates before 2026-11-02; automate renewal when practical.
 - Add scheduled PostgreSQL backups stored off the server.
 - Add Docker log rotation limits.
 - Apply regular Ubuntu security updates.
@@ -309,7 +305,8 @@ Before changing code:
 4. Confirm whether the task affects frontend, backend, infrastructure, or more than one repository.
 5. Create and maintain the iteration plan under `doc/plans` in every affected repository.
 6. For code changes, create the GitHub Issue before creating the branch.
-7. Never expose passwords, production `.env` contents, or SSH key material.
+7. Never expose passwords, production .env contents, or SSH key material.
+8. At the end of every feature, update the root README.md in every affected repository, then update the iteration record and synchronized handoff before closing the documentation workflow.
 
 ## 13. Workspace and documentation lessons
 
@@ -322,6 +319,11 @@ The documentation migration on 2026-07-22 exposed the following local workflow d
 - Run `git diff --check` before committing. During this migration it detected an extra blank line at the end of `HANDOFF.md`; normalize files to one final newline before commit.
 - Shared project documentation now has versioned copies in both repositories. Update both copies for cross-project facts and compare their relative file lists and SHA-256 hashes before merging. Repository-specific documentation can remain local to the affected repository.
 - The original `D:\AAA\develop\CalorieCalculator\doc` directory was retained as an unversioned migration backup. The repository copies are authoritative; do not update only the old top-level copy or use it as the sole handoff source.
+- GitHub CLI is installed at `D:\AAA\app\GitHubCLI\gh.exe`. Elevated PowerShell sessions may not inherit the PATH entry, so use this absolute path instead of assuming `gh` resolves.
+- Distinguish an approval timeout from a command timeout. If Codex reports that automatic permission review did not finish, the command did not start; do not diagnose it as GitHub, SSH, VPN, or application failure.
+- For VPN-dependent GitHub, SSH, build, upload, and deployment work, split compound commands into short observable steps. Use a bounded timeout for each step and verify remote state before retrying.
+- A long-lived `ssh.exe` process may belong to the user or another session. Do not terminate it merely because a new SSH command is slow.
+- WeChat Developer Tools can retain a stale bundle or hot-reload state in which every button appears unresponsive. Recompile, clear cache, and reopen the project before changing application code. On 2026-07-27 the user confirmed the buttons worked after this refresh.
 
 ## 14. Weight Tracking Sprint and production state
 
@@ -352,12 +354,71 @@ Additional lessons from this iteration:
 - H5 and WeChat builds share `dist`. Source-level tests must target their source suites explicitly; the generated-bundle compatibility test belongs after the matching WeChat build.
 - Trend APIs and renderers must retain null points before the first record so the horizontal date scale remains accurate.
 
-## 15. Baseline for the next feature
+## 15. Body Circumference Tracking Sprint and production state
 
-- Body-weight tracking is complete across code, tests, production migration, backend deployment, documentation, and upload-ready WeChat build output.
-- Stable feature baselines before the final handoff-only merge are backend `12a508c` and frontend `232c8f0`; use the later merged `main` heads as the actual starting commits.
-- Backend tests last passed: 14. Frontend source tests last passed: 11. WeChat bundle compatibility last passed on 2026-07-27.
-- The latest generated `dist` is suitable for a manually uploaded experience version. A future frontend change must rerun `npm run verify:weapp` before upload.
-- Current experience testing still uses `http://124.221.90.240/api` and requires Developer Debugging. Formal release remains blocked by the domain, ICP, HTTPS, and WeChat legal-domain tasks in section 10.
-- Preserve all existing production food, daily-record, and body-weight data. Do not rerun destructive `schema.sql` against an existing database; use a dedicated non-destructive migration for any future schema change.
-- Before implementing the next feature, read this handoff, inspect both repository statuses, create the new plan under both `doc/plans` copies, then create the Sprint/Project and cross-repository Issues.
+The Body Circumference Tracking Sprint was completed on 2026-07-27:
+
+- GitHub Project: [CalorieCalculator - Body Circumference Tracking Sprint (Project #5)](https://github.com/users/Hunter3304/projects/5).
+- Backend Issue #18 / Pull Request #20 delivered persistence, migration, APIs, and tests. Merge commit: `d37aa28b7f6001e264a518d6f9411d2486a40269`.
+- Frontend Issues #23 and #24 / Pull Request #25 delivered the homepage action and summary, sparse editor, selector-based trend page, and tests. Merge commit: `a86e8d3849ca2458416d6837fff4c7a5fa66fa62`.
+- Backend Issue #19 tracks production and release documentation. Frontend Issue #26 records the public deployment, rollback, container, and WeChat release summary.
+- Backend verification passed with 23 Maven tests and a clean package. Frontend verification passed with 16 source tests, ESLint, Stylelint, H5 build, and `verify:weapp`.
+- A custom-format production database backup was created before migration, verified with `pg_restore --list`, and stored with mode 600.
+- The previous backend image was tagged and retained for immediate rollback.
+- The deployment archive checksum matched locally and remotely before extraction.
+- The non-destructive migration succeeded and only the backend container was recreated.
+- The PostgreSQL container and persistent data volume remained unchanged.
+- The Nginx container remained unchanged.
+- Only the backend container was recreated from the merged release.
+- All three containers were healthy/running. Public ports 5432 and 8080 remained closed, `/api/import/json` remained blocked, and `/healthz` passed.
+- Production API acceptance covered empty state, partial input, independent carry-forward, all-blank no-op, trend, clear fallback, delete, and cleanup. Temporary acceptance records were deleted.
+- Existing user food, daily-record, weight, and circumference data must never be printed in public Issues or documentation.
+- The user confirmed homepage buttons work in WeChat Developer Tools after refreshing its cached build. Uploading/selecting a new experience version remains manual; no upload or formal publication is claimed.
+
+## 16. Baseline for the next feature
+
+- Food, calendar, body-weight, and body-circumference functionality is complete across code, automated verification, production migration/deployment, and versioned documentation.
+- Use the latest merged `main` heads after the release-documentation PRs as the next starting commits.
+- Backend tests last passed: 23. Frontend source tests last passed: 16. WeChat bundle compatibility and H5 production build last passed on 2026-07-27.
+- The latest generated `dist` is suitable for manual WeChat Developer Tools testing/upload. A future frontend change must rerun `npm run verify:weapp`.
+- Experience version `1.1.2` uses `https://api.caloriecalculator.top/api` and works without Developer Debugging. Formal review is blocked by missing authentication and per-user data isolation, not by networking.
+- Preserve all existing production food, daily-record, body-weight, and body-circumference data. Never rerun destructive `schema.sql` against an existing database; use a dedicated non-destructive migration.
+- Before implementing another feature, read this handoff, inspect both repository statuses, create the synchronized plan, create the Project/Issues, and follow the Issue-branch-PR-merge-cleanup workflow.
+- At feature completion, update both affected root README files and the synchronized iteration/handoff records. Verify shared relative file lists and SHA-256 hashes before merging.
+
+## 17. HTTPS rollout problems and solutions
+
+The 2026-08-04 HTTPS rollout exposed several operational issues. Preserve these lessons:
+
+- In-app browser control and built-in `apply_patch` repeatedly failed with `windows sandbox: helper_unknown_error: setup refresh had errors`. This was local Codex infrastructure failure, not a Tencent Cloud or application failure. The user completed authenticated console-only actions such as DNS, firewall, certificate requests/downloads, WeChat legal-domain configuration, and experience upload. When patching remained unavailable after the required retry, exact-match PowerShell edits were used only in isolated worktrees and every edit was followed immediately by `git diff` and `git diff --check`.
+- VPN-dependent SSH, SCP, npm, Git, and GitHub commands were sometimes slow but healthy. Do not stop a running transfer merely because it is quiet; wait in bounded intervals, communicate status, and inspect authoritative remote state before retrying.
+- A GitHub merge appeared to run for several minutes, but the tool reported that automatic permission approval had timed out. The merge command never started. Read-only `gh pr view` confirmed both PRs were still `OPEN` and `CLEAN`; retrying one merge at a time completed in seconds. Keep approval timeouts distinct from command/VPN timeouts.
+- PowerShell expanded a remote POSIX `$(...)` expression locally before SSH, so the intended remote backup command never ran. Avoid unescaped command substitutions in double-quoted PowerShell SSH commands; prefer explicit validated paths or a separately transferred script.
+- A first remote cleanup attempt failed on nested quoting. The successful cleanup resolved the exact temporary directory with `realpath`, compared it to the expected `/tmp` path, and only then removed that single directory.
+- PowerShell applied `-notmatch` element-by-element to the multi-line `curl` response and falsely reported that the ICP number was missing. Join response lines into one string before applying a whole-document regex; direct public response and in-container checks confirmed the page was correct.
+- Certificate packages were kept outside both repositories, extracted under restricted Windows ACLs, checked for SANs/expiry and certificate-key modulus matches, uploaded to a random mode-700 server directory, loaded by a one-shot Nginx syntax test, installed with root-only key permissions, and then removed from the temporary server directory.
+- Before the Nginx switch, the current Compose/Nginx files and backend/PostgreSQL container IDs were recorded. The production change recreated only Nginx and included rollback commands. HTTPS root, `www`, health, real API, HTTP redirect, import blocking, ICP display, and closed 5432/8080 were verified externally.
+- The raw-IP HTTP route remains temporarily available for infrastructure rollback and older experience builds. Formal Mini Program traffic must use the HTTPS domain.
+- Free certificates are valid for 90 days. Tencent Cloud renewal alone does not update this self-managed Docker Nginx automatically; obtain the replacement certificate and redeploy it before expiry.
+
+## 18. Formal-release blocker: authentication and tenant isolation
+
+Do not submit the Mini Program for formal review or public release until this section is resolved:
+
+- The frontend does not call `wx.login`/`Taro.login` or attach a user session to API requests.
+- The backend has no `openid`, application user ID, authentication filter, session token, or authenticated principal.
+- `daily_records`, `body_weight_records`, `body_circumference_records`, and custom foods have no owner column. Reads, updates, and deletes operate only by date or record ID.
+- Consequently every public user would read and mutate the same food records, weight values, and circumference values. HTTPS protects transport but does not provide identity or authorization.
+
+The next implementation must:
+
+1. Exchange a WeChat login code for `openid` on the backend; keep AppSecret only in production server secrets.
+2. Create an application user/session model and require an authenticated session for personal-data APIs.
+3. Add non-null user ownership to daily records, weights, circumferences, and custom foods while keeping the shared food catalog global.
+4. Filter every personal-data select, insert, update, and delete by the authenticated user; never trust a user ID supplied by the client.
+5. Migrate existing production records non-destructively to the original owner after that owner is securely identified. Preserve all existing data and verify the migration before deployment.
+6. Provide privacy disclosure plus account/data deletion behavior appropriate for the information stored.
+7. Add two-user integration tests proving that users cannot read, update, or delete one another's records.
+8. Build and test another experience version without Developer Debugging before submitting formal review.
+
+Until then, experience version `1.1.2` is suitable only for the approved tester set, not public release.
