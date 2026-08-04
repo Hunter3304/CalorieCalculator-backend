@@ -15,6 +15,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class BodyWeightServiceTest {
+    private static final Long USER_ID = 42L;
     private final BodyWeightMapper mapper = mock(BodyWeightMapper.class);
     private final BodyWeightService service = new BodyWeightService(mapper);
     private final LocalDate today = LocalDate.of(2026, 7, 22);
@@ -22,10 +23,10 @@ class BodyWeightServiceTest {
     @Test
     void returnsCarriedSnapshotWithSourceRecord() {
         BodyWeightRecord source = record(4, "2026-07-20", "65.5");
-        when(mapper.findFirstRecordDate()).thenReturn(source.getRecordDate());
-        when(mapper.findLatestOnOrBefore(today)).thenReturn(source);
+        when(mapper.findFirstRecordDate(USER_ID)).thenReturn(source.getRecordDate());
+        when(mapper.findLatestOnOrBefore(USER_ID, today)).thenReturn(source);
 
-        BodyWeightSnapshotDto snapshot = service.getSnapshot(today);
+        BodyWeightSnapshotDto snapshot = service.getSnapshot(USER_ID, today);
 
         assertEquals(4, snapshot.recordId());
         assertEquals(LocalDate.of(2026, 7, 20), snapshot.sourceDate());
@@ -35,10 +36,11 @@ class BodyWeightServiceTest {
 
     @Test
     void returnsEmptySnapshotBeforeFirstRecord() {
-        when(mapper.findFirstRecordDate()).thenReturn(LocalDate.of(2026, 7, 20));
-        when(mapper.findLatestOnOrBefore(LocalDate.of(2026, 7, 19))).thenReturn(null);
+        LocalDate selected = LocalDate.of(2026, 7, 19);
+        when(mapper.findFirstRecordDate(USER_ID)).thenReturn(LocalDate.of(2026, 7, 20));
+        when(mapper.findLatestOnOrBefore(USER_ID, selected)).thenReturn(null);
 
-        BodyWeightSnapshotDto snapshot = service.getSnapshot(LocalDate.of(2026, 7, 19));
+        BodyWeightSnapshotDto snapshot = service.getSnapshot(USER_ID, selected);
 
         assertNull(snapshot.recordId());
         assertNull(snapshot.weightKg());
@@ -56,26 +58,28 @@ class BodyWeightServiceTest {
     }
 
     @Test
-    void upsertsAValidSelectedDate() {
+    void upsertsAValidSelectedDateForTheOwner() {
         LocalDate date = today.minusDays(2);
         BigDecimal weight = new BigDecimal("65.5");
         BodyWeightRecord saved = record(7, "2026-07-20", "65.5");
-        when(mapper.findFirstRecordDate()).thenReturn(date);
-        when(mapper.findLatestOnOrBefore(date)).thenReturn(saved);
+        when(mapper.findFirstRecordDate(USER_ID)).thenReturn(date);
+        when(mapper.findLatestOnOrBefore(USER_ID, date)).thenReturn(saved);
 
-        BodyWeightSnapshotDto snapshot = service.save(date, weight);
+        BodyWeightSnapshotDto snapshot = service.save(USER_ID, date, weight);
 
-        verify(mapper).upsert(date, weight);
+        verify(mapper).upsert(USER_ID, date, weight);
         assertTrue(snapshot.recordedOnSelectedDate());
     }
 
     @Test
-    void updateAndDeleteRequireARealRecord() {
-        when(mapper.findById(99)).thenReturn(null);
+    void updateAndDeleteCannotUseAnotherUsersRecord() {
+        when(mapper.findById(USER_ID, 99)).thenReturn(null);
 
         assertThrows(NoSuchElementException.class,
-                () -> service.update(99, new BigDecimal("70.0")));
-        assertThrows(NoSuchElementException.class, () -> service.delete(99));
+                () -> service.update(USER_ID, 99, new BigDecimal("70.0")));
+        assertThrows(NoSuchElementException.class, () -> service.delete(USER_ID, 99));
+        verify(mapper, never()).updateWeight(anyLong(), anyInt(), any());
+        verify(mapper, never()).deleteById(anyLong(), anyInt());
     }
 
     @Test
@@ -83,11 +87,11 @@ class BodyWeightServiceTest {
         LocalDate start = LocalDate.of(2026, 7, 18);
         BodyWeightRecord baseline = record(1, "2026-07-17", "66.0");
         BodyWeightRecord changed = record(2, "2026-07-20", "65.5");
-        when(mapper.findFirstRecordDate()).thenReturn(LocalDate.of(2026, 7, 17));
-        when(mapper.findLatestOnOrBefore(start)).thenReturn(baseline);
-        when(mapper.findBetween(start, today)).thenReturn(List.of(changed));
+        when(mapper.findFirstRecordDate(USER_ID)).thenReturn(LocalDate.of(2026, 7, 17));
+        when(mapper.findLatestOnOrBefore(USER_ID, start)).thenReturn(baseline);
+        when(mapper.findBetween(USER_ID, start, today)).thenReturn(List.of(changed));
 
-        BodyWeightTrendDto trend = service.getTrend(start, today, today);
+        BodyWeightTrendDto trend = service.getTrend(USER_ID, start, today, today);
 
         assertEquals(5, trend.points().size());
         assertEquals(new BigDecimal("66.0"), trend.points().get(0).weightKg());
@@ -101,11 +105,11 @@ class BodyWeightServiceTest {
     void leavesDatesBeforeFirstRecordEmpty() {
         LocalDate start = LocalDate.of(2026, 7, 18);
         BodyWeightRecord first = record(2, "2026-07-20", "65.5");
-        when(mapper.findFirstRecordDate()).thenReturn(first.getRecordDate());
-        when(mapper.findLatestOnOrBefore(start)).thenReturn(null);
-        when(mapper.findBetween(start, today)).thenReturn(List.of(first));
+        when(mapper.findFirstRecordDate(USER_ID)).thenReturn(first.getRecordDate());
+        when(mapper.findLatestOnOrBefore(USER_ID, start)).thenReturn(null);
+        when(mapper.findBetween(USER_ID, start, today)).thenReturn(List.of(first));
 
-        BodyWeightTrendDto trend = service.getTrend(start, today, today);
+        BodyWeightTrendDto trend = service.getTrend(USER_ID, start, today, today);
 
         assertEquals(5, trend.points().size());
         assertNull(trend.points().get(0).weightKg());
@@ -116,9 +120,9 @@ class BodyWeightServiceTest {
     @Test
     void rejectsFutureOrOversizedTrendRanges() {
         assertThrows(IllegalArgumentException.class,
-                () -> service.getTrend(today.minusDays(6), today.plusDays(1), today));
+                () -> service.getTrend(USER_ID, today.minusDays(6), today.plusDays(1), today));
         assertThrows(IllegalArgumentException.class,
-                () -> service.getTrend(today.minusDays(365), today, today));
+                () -> service.getTrend(USER_ID, today.minusDays(365), today, today));
     }
 
     private BodyWeightRecord record(int id, String date, String weight) {

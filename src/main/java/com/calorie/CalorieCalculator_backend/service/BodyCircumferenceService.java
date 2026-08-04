@@ -31,21 +31,22 @@ public class BodyCircumferenceService {
         this.mapper = mapper;
     }
 
-    public BodyCircumferenceSnapshotDto getSnapshot(LocalDate selectedDate) {
+    public BodyCircumferenceSnapshotDto getSnapshot(Long userId, LocalDate selectedDate) {
         requireDate(selectedDate);
-        BodyCircumferenceRecord selectedRecord = mapper.findByDate(selectedDate);
+        BodyCircumferenceRecord selectedRecord = mapper.findByDate(userId, selectedDate);
         return new BodyCircumferenceSnapshotDto(
                 selectedDate,
                 selectedRecord == null ? null : selectedRecord.getId(),
-                resolveValue(selectedDate, BodyCircumferenceType.CHEST),
-                resolveValue(selectedDate, BodyCircumferenceType.WAIST),
-                resolveValue(selectedDate, BodyCircumferenceType.HIP),
-                resolveValue(selectedDate, BodyCircumferenceType.ARM),
-                resolveValue(selectedDate, BodyCircumferenceType.THIGH),
-                resolveValue(selectedDate, BodyCircumferenceType.CALF));
+                resolveValue(userId, selectedDate, BodyCircumferenceType.CHEST),
+                resolveValue(userId, selectedDate, BodyCircumferenceType.WAIST),
+                resolveValue(userId, selectedDate, BodyCircumferenceType.HIP),
+                resolveValue(userId, selectedDate, BodyCircumferenceType.ARM),
+                resolveValue(userId, selectedDate, BodyCircumferenceType.THIGH),
+                resolveValue(userId, selectedDate, BodyCircumferenceType.CALF));
     }
 
     public BodyCircumferenceSnapshotDto save(
+            Long userId,
             LocalDate recordDate,
             BodyCircumferenceRequest request) {
         validateRecordDate(recordDate, LocalDate.now());
@@ -56,17 +57,17 @@ public class BodyCircumferenceService {
         EnumMap<BodyCircumferenceType, BigDecimal> requestedValues = requestValues(request);
         requestedValues.values().forEach(this::validateValue);
         Set<BodyCircumferenceType> clearFields = parseClearFields(request.clearFields());
-        BodyCircumferenceRecord existing = mapper.findByDate(recordDate);
+        BodyCircumferenceRecord existing = mapper.findByDate(userId, recordDate);
 
         if (existing == null) {
             if (requestedValues.values().stream().allMatch(Objects::isNull)) {
-                return getSnapshot(recordDate);
+                return getSnapshot(userId, recordDate);
             }
             BodyCircumferenceRecord created = new BodyCircumferenceRecord();
             created.setRecordDate(recordDate);
             applyValues(created, requestedValues);
-            mapper.insert(created);
-            return getSnapshot(recordDate);
+            mapper.insert(userId, created);
+            return getSnapshot(userId, recordDate);
         }
 
         for (BodyCircumferenceType type : BodyCircumferenceType.values()) {
@@ -79,26 +80,30 @@ public class BodyCircumferenceService {
         }
 
         if (isEmpty(existing)) {
-            mapper.deleteById(existing.getId());
+            mapper.deleteById(userId, existing.getId());
         } else {
-            mapper.update(existing);
+            mapper.update(userId, existing);
         }
-        return getSnapshot(recordDate);
+        return getSnapshot(userId, recordDate);
     }
 
-    public void delete(Integer id) {
-        requireRecord(id);
-        mapper.deleteById(id);
+    public void delete(Long userId, Integer id) {
+        requireRecord(userId, id);
+        if (mapper.deleteById(userId, id) == 0) {
+            throw new NoSuchElementException("Circumference record not found");
+        }
     }
 
     public BodyCircumferenceTrendDto getTrend(
+            Long userId,
             String measurementType,
             LocalDate startDate,
             LocalDate endDate) {
-        return getTrend(measurementType, startDate, endDate, LocalDate.now());
+        return getTrend(userId, measurementType, startDate, endDate, LocalDate.now());
     }
 
     BodyCircumferenceTrendDto getTrend(
+            Long userId,
             String measurementType,
             LocalDate startDate,
             LocalDate endDate,
@@ -116,11 +121,11 @@ public class BodyCircumferenceService {
             throw new IllegalArgumentException("Trend range cannot exceed 365 days");
         }
 
-        LocalDate firstRecordDate = mapper.findFirstDateForColumn(type.columnName());
+        LocalDate firstRecordDate = mapper.findFirstDateForColumn(userId, type.columnName());
         BodyCircumferenceRecord current =
-                mapper.findLatestForColumn(startDate.minusDays(1), type.columnName());
+                mapper.findLatestForColumn(userId, startDate.minusDays(1), type.columnName());
         List<BodyCircumferenceRecord> records =
-                mapper.findBetweenForColumn(startDate, endDate, type.columnName());
+                mapper.findBetweenForColumn(userId, startDate, endDate, type.columnName());
         List<BodyCircumferenceTrendPointDto> points = new ArrayList<>();
         int recordIndex = 0;
 
@@ -161,10 +166,11 @@ public class BodyCircumferenceService {
     }
 
     private BodyCircumferenceValueDto resolveValue(
+            Long userId,
             LocalDate selectedDate,
             BodyCircumferenceType type) {
         BodyCircumferenceRecord record =
-                mapper.findLatestForColumn(selectedDate, type.columnName());
+                mapper.findLatestForColumn(userId, selectedDate, type.columnName());
         if (record == null) {
             return new BodyCircumferenceValueDto(null, null, false);
         }
@@ -235,11 +241,11 @@ public class BodyCircumferenceService {
                 .allMatch(type -> getValue(record, type) == null);
     }
 
-    private BodyCircumferenceRecord requireRecord(Integer id) {
+    private BodyCircumferenceRecord requireRecord(Long userId, Integer id) {
         if (id == null) {
             throw new IllegalArgumentException("Circumference record id is required");
         }
-        BodyCircumferenceRecord record = mapper.findById(id);
+        BodyCircumferenceRecord record = mapper.findById(userId, id);
         if (record == null) {
             throw new NoSuchElementException("Circumference record not found");
         }

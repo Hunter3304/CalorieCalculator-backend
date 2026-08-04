@@ -5,51 +5,62 @@ import org.apache.ibatis.annotations.*;
 
 import java.util.List;
 
-//myBatis Mapper接口
 @Mapper
 public interface FoodMapper {
+    String ACCESSIBLE = "(f.is_custom = 0 OR f.owner_user_id = #{userId})";
 
-    //alle fooddaten abfragen
-    @Select("SELECT * FROM food_items ORDER BY id ASC")
-    List<FoodItem> getAllFoods();
+    @Select("SELECT f.* FROM food_items f WHERE " + ACCESSIBLE + " ORDER BY f.id")
+    List<FoodItem> getAllFoods(@Param("userId") Long userId);
 
-    @Select("SELECT * FROM food_items WHERE id = #{id}")
-    FoodItem getFoodById(Long id);
+    @Select("SELECT f.* FROM food_items f WHERE f.id = #{id} AND " + ACCESSIBLE)
+    FoodItem getFoodById(@Param("id") Long id, @Param("userId") Long userId);
 
-
-    //插入食物items
-    @Insert("INSERT INTO food_items(name_zh, name_en, protein_per_100g, carbs_per_100g, fat_per_100g) " +
-            "VALUES(#{nameZh}, #{nameEn}, #{proteinPer100g}, #{carbsPer100g}, #{fatPer100g})")
+    @Insert("INSERT INTO food_items(name_zh, name_en, protein_per_100g, carbs_per_100g, fat_per_100g, is_custom) " +
+            "VALUES(#{nameZh}, #{nameEn}, #{proteinPer100g}, #{carbsPer100g}, #{fatPer100g}, 0)")
     void insertFood(FoodItem foodItem);
 
-    // 查询某一页的食物（核心修改：先按最后使用时间降序，再按 ID 降序）
-    @Select("SELECT * FROM food_items ORDER BY last_used_time DESC, id DESC LIMIT #{size} OFFSET #{offset}")
-    List<FoodItem> getFoodsByPage(@Param("offset") int offset, @Param("size") int size);
+    @Select("SELECT f.* FROM food_items f " +
+            "LEFT JOIN user_food_usage u ON u.food_id = f.id AND u.owner_user_id = #{userId} " +
+            "WHERE " + ACCESSIBLE + " " +
+            "ORDER BY u.last_used_at DESC NULLS LAST, f.id DESC LIMIT #{size} OFFSET #{offset}")
+    List<FoodItem> getFoodsByPage(@Param("userId") Long userId,
+                                  @Param("offset") int offset,
+                                  @Param("size") int size);
 
-    // 查询数据库里总共有多少条食物（用来计算总页数）
-    @Select("SELECT COUNT(*) FROM food_items")
-    int getTotalFoodsCount();
+    @Select("SELECT COUNT(*) FROM food_items f WHERE " + ACCESSIBLE)
+    int getTotalFoodsCount(@Param("userId") Long userId);
 
-    // 模糊搜索食物名字
-    @Select("SELECT * FROM food_items WHERE name_zh LIKE CONCAT('%', #{keyword}, '%') ORDER BY id DESC LIMIT 50")
-    List<FoodItem> searchFoodsByName(@Param("keyword") String keyword);
+    @Select("SELECT f.* FROM food_items f " +
+            "LEFT JOIN user_food_usage u ON u.food_id = f.id AND u.owner_user_id = #{userId} " +
+            "WHERE " + ACCESSIBLE + " AND f.name_zh LIKE CONCAT('%', #{keyword}, '%') " +
+            "ORDER BY u.last_used_at DESC NULLS LAST, f.id DESC LIMIT 50")
+    List<FoodItem> searchFoodsByName(@Param("userId") Long userId,
+                                     @Param("keyword") String keyword);
 
-    // 1. 获取所有自定义食物
-    @Select("SELECT * FROM food_items WHERE is_custom = 1 ORDER BY id DESC")
-    List<FoodItem> getCustomFoods();
+    @Select("SELECT f.* FROM food_items f " +
+            "WHERE f.is_custom = 1 AND f.owner_user_id = #{userId} ORDER BY f.id DESC")
+    List<FoodItem> getCustomFoods(@Param("userId") Long userId);
 
-    // 2. 修改之前的插入语句，强制加上 is_custom = 1
-    @Insert("INSERT INTO food_items(name_zh, name_en, protein_per_100g, carbs_per_100g, fat_per_100g, is_custom) " +
-            "VALUES(#{nameZh}, #{nameEn}, #{proteinPer100g}, #{carbsPer100g}, #{fatPer100g}, 1)")
-    void insertCustomFood(FoodItem foodItem);
+    @Insert("INSERT INTO food_items(owner_user_id, name_zh, name_en, protein_per_100g, " +
+            "carbs_per_100g, fat_per_100g, is_custom) VALUES(#{userId}, #{food.nameZh}, " +
+            "#{food.nameEn}, #{food.proteinPer100g}, #{food.carbsPer100g}, #{food.fatPer100g}, 1)")
+    void insertCustomFood(@Param("userId") Long userId, @Param("food") FoodItem foodItem);
 
-    // 删除自定义食物
-    @Delete("DELETE FROM food_items WHERE id = #{id} AND is_custom = 1")
-    void deleteCustomFood(Integer id);
+    @Delete("DELETE FROM food_items WHERE id = #{id} AND is_custom = 1 " +
+            "AND owner_user_id = #{userId}")
+    int deleteCustomFood(@Param("userId") Long userId, @Param("id") Integer id);
 
-    // 更新自定义食物（如果用户填错了克数，可以修改）
-    @Update("UPDATE food_items SET name_zh=#{nameZh}, protein_per_100g=#{proteinPer100g}, " +
-            "carbs_per_100g=#{carbsPer100g}, fat_per_100g=#{fatPer100g} " +
-            "WHERE id=#{id} AND is_custom = 1")
-    void updateCustomFood(FoodItem foodItem);
+    @Update("UPDATE food_items SET name_zh = #{food.nameZh}, " +
+            "protein_per_100g = #{food.proteinPer100g}, carbs_per_100g = #{food.carbsPer100g}, " +
+            "fat_per_100g = #{food.fatPer100g} WHERE id = #{food.id} AND is_custom = 1 " +
+            "AND owner_user_id = #{userId}")
+    int updateCustomFood(@Param("userId") Long userId, @Param("food") FoodItem foodItem);
+
+    @Insert("INSERT INTO user_food_usage(owner_user_id, food_id, last_used_at) " +
+            "VALUES(#{userId}, #{foodId}, CURRENT_TIMESTAMP) " +
+            "ON CONFLICT (owner_user_id, food_id) DO UPDATE SET last_used_at = CURRENT_TIMESTAMP")
+    void recordFoodUsage(@Param("userId") Long userId, @Param("foodId") Integer foodId);
+
+    @Delete("DELETE FROM food_items WHERE owner_user_id = #{userId} AND is_custom = 1")
+    int deleteCustomFoodsByUser(@Param("userId") Long userId);
 }

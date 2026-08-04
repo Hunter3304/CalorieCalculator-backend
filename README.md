@@ -27,6 +27,9 @@ Project handoff, iteration history, and iteration plans are indexed in [`doc/REA
 - Record six independently optional body-circumference values per date
 - Carry each circumference forward independently and return selectable single-measurement trends
 - Import the bundled Chinese food composition JSON files
+- Exchange WeChat Mini Program login codes only on the server and issue hashed, expiring application sessions
+- Isolate daily records, body measurements, custom foods, and per-user food ordering by the authenticated user
+- Revoke the current session and delete an account together with all of its personal data
 - Configure the database and server port through environment variables
 
 ## Prerequisites
@@ -74,6 +77,9 @@ The default connection settings are:
 | Password | `123456` | `PGPASSWORD` |
 | HTTP port | `8080` | `PORT` |
 | Spring SQL initialization | `never` | `SQL_INIT_MODE` |
+| WeChat Mini Program AppID | empty | `WECHAT_APP_ID` |
+| WeChat Mini Program AppSecret | empty | `WECHAT_APP_SECRET` |
+| Session lifetime in days | `30` | `AUTH_SESSION_DAYS` |
 
 Example for the current PowerShell session:
 
@@ -91,12 +97,12 @@ $env:PGPASSWORD = "your-postgres-password"
 .\mvnw.cmd spring-boot:run
 ```
 
-The API is available at `http://localhost:8080/api`.
+The API is available at `http://localhost:8080/api`. All `/api/**` routes except `POST /api/auth/wechat` require an application Bearer token. The AppSecret belongs only in the backend environment and must never be placed in the Mini Program, a command transcript, or Git.
 
 Quick check after startup:
 
 ```powershell
-Invoke-RestMethod "http://localhost:8080/api/foods/page?page=1&size=10"
+Invoke-RestMethod "http://localhost:8080/healthz"
 ```
 
 ## Build and test
@@ -108,12 +114,16 @@ Invoke-RestMethod "http://localhost:8080/api/foods/page?page=1&size=10"
 
 Tests that start the Spring context require a reachable PostgreSQL database unless a test-specific datasource is configured.
 
-The current suite contains 23 tests. In addition to the body-weight coverage, the circumference service tests cover sparse values, independent carry-forward, clearing, deletion, validation, and field-specific trends.
+The current suite contains 33 tests. It covers authentication-filter behavior, token hashing/expiry/revocation, account deletion, owner propagation in the personal-data services, body-weight behavior, and sparse/independently carried circumference values.
 
 ## API overview
 
 | Method | Path | Description |
 | --- | --- | --- |
+| POST | `/api/auth/wechat` | Exchange a one-time WeChat login code for an opaque app session |
+| DELETE | `/api/auth/session` | Revoke the current authenticated session |
+| GET | `/api/account` | Return non-sensitive account metadata |
+| DELETE | `/api/account` | Delete the account, sessions, and all owned personal data |
 | GET | `/api/foods` | List all foods |
 | GET | `/api/foods/page?page=1&size=10` | List foods by page |
 | GET | `/api/foods/search?keyword=apple` | Search Chinese food names |
@@ -202,7 +212,7 @@ The body-circumference backend was deployed and verified on 2026-07-27. Before m
 
 The HTTP IP endpoint remains available temporarily for development and experience-version rollback. Formal Mini Program builds use the ICP-filed HTTPS API domain, which must also be registered as a WeChat request domain.
 
-The HTTPS experience version `1.1.2` works on a physical device without Developer Debugging. Do not submit it for formal public review yet: the current API has no WeChat login or authenticated user context, so daily records, body measurements, and custom foods are not isolated between users. The next release must add server-side WeChat code exchange, session authentication, owner-scoped persistence, non-destructive ownership migration for existing production data, privacy disclosure, and account/data deletion before public review.
+The HTTPS experience version `1.1.2` works on a physical device without Developer Debugging, but it remains tester-only because it predates authentication. The replacement implementation now includes server-side WeChat code exchange, hashed opaque sessions, owner-scoped persistence, guarded legacy-data claiming, privacy disclosure, and account/data deletion. It must still be merged, backed up and migrated in production, deployed with the AppSecret entered privately, uploaded as a new experience version, and accepted with two different WeChat accounts before formal review.
 
 ## Troubleshooting
 
