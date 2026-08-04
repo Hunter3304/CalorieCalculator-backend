@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="日常饮食小记是一款用于记录饮食、营养、体重和身体围度的个人健康记录工具。">
+    <title>日常饮食小记</title>
+    <style>
+      :root { color-scheme: light; font-family: Inter, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif; background: #f5f8f2; color: #19311f; }
+      * { box-sizing: border-box; }
+      body { min-height: 100vh; margin: 0; display: grid; grid-template-rows: 1fr auto; background: radial-gradient(circle at 18% 14%, rgba(142, 197, 114, 0.24), transparent 32rem), linear-gradient(145deg, #f8fbf5 0%, #edf5e9 100%); }
+      main { width: min(920px, calc(100% - 40px)); margin: auto; padding: 72px 0; }
+      .eyebrow { margin: 0 0 16px; color: #4f7f49; font-size: 14px; font-weight: 700; letter-spacing: 0.16em; }
+      h1 { margin: 0; max-width: 720px; font-size: clamp(42px, 8vw, 78px); line-height: 1.04; letter-spacing: -0.04em; }
+      .intro { max-width: 640px; margin: 28px 0 0; color: #4c6251; font-size: clamp(17px, 2.5vw, 21px); line-height: 1.8; }
+      .features { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 48px; }
+      .feature { min-height: 150px; padding: 24px; border: 1px solid rgba(57, 102, 60, 0.14); border-radius: 22px; background: rgba(255, 255, 255, 0.66); box-shadow: 0 20px 50px rgba(48, 87, 51, 0.07); }
+      .feature strong { display: block; margin-bottom: 10px; font-size: 18px; }
+      .feature span { color: #617265; line-height: 1.7; }
+      footer { padding: 22px 20px; border-top: 1px solid rgba(57, 102, 60, 0.12); color: #667269; text-align: center; font-size: 13px; }
+      footer a { color: inherit; }
+      @media (max-width: 680px) { main { padding: 48px 0; } .features { grid-template-columns: 1fr; margin-top: 34px; } .feature { min-height: auto; } }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p class="eyebrow">CALORIE CALCULATOR</p>
+      <h1>日常饮食小记</h1>
+      <p class="intro">记录每一天的饮食与营养变化，也可以持续整理体重和身体围度，让长期趋势更清晰。</p>
+      <section class="features" aria-label="主要功能">
+        <div class="feature"><strong>饮食记录</strong><span>查询食物营养信息，按日期保存每日饮食。</span></div>
+        <div class="feature"><strong>身体数据</strong><span>记录体重与六项身体围度，保留真实日期。</span></div>
+        <div class="feature"><strong>趋势回顾</strong><span>通过日历和趋势视图查看长期变化。</span></div>
+      </section>
+    </main>
+    <footer><span>© 2026 日常饮食小记 · </span><a href="https://beian.miit.gov.cn/" rel="noopener noreferrer">浙ICP备2026030216号-2</a></footer>
+  </body>
+</html>
