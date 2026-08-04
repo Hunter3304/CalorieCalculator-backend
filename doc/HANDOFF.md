@@ -1,6 +1,6 @@
 # CalorieCalculator Engineering Handoff
 
-Last updated: 2026-07-27 (Asia/Shanghai)
+Last updated: 2026-08-04 (Asia/Shanghai)
 
 ## 1. Purpose
 
@@ -309,7 +309,8 @@ Before changing code:
 4. Confirm whether the task affects frontend, backend, infrastructure, or more than one repository.
 5. Create and maintain the iteration plan under `doc/plans` in every affected repository.
 6. For code changes, create the GitHub Issue before creating the branch.
-7. Never expose passwords, production `.env` contents, or SSH key material.
+7. Never expose passwords, production .env contents, or SSH key material.
+8. At the end of every feature, update the root README.md in every affected repository, then update the iteration record and synchronized handoff before closing the documentation workflow.
 
 ## 13. Workspace and documentation lessons
 
@@ -322,6 +323,11 @@ The documentation migration on 2026-07-22 exposed the following local workflow d
 - Run `git diff --check` before committing. During this migration it detected an extra blank line at the end of `HANDOFF.md`; normalize files to one final newline before commit.
 - Shared project documentation now has versioned copies in both repositories. Update both copies for cross-project facts and compare their relative file lists and SHA-256 hashes before merging. Repository-specific documentation can remain local to the affected repository.
 - The original `D:\AAA\develop\CalorieCalculator\doc` directory was retained as an unversioned migration backup. The repository copies are authoritative; do not update only the old top-level copy or use it as the sole handoff source.
+- GitHub CLI is installed at `D:\AAA\app\GitHubCLI\gh.exe`. Elevated PowerShell sessions may not inherit the PATH entry, so use this absolute path instead of assuming `gh` resolves.
+- Distinguish an approval timeout from a command timeout. If Codex reports that automatic permission review did not finish, the command did not start; do not diagnose it as GitHub, SSH, VPN, or application failure.
+- For VPN-dependent GitHub, SSH, build, upload, and deployment work, split compound commands into short observable steps. Use a bounded timeout for each step and verify remote state before retrying.
+- A long-lived `ssh.exe` process may belong to the user or another session. Do not terminate it merely because a new SSH command is slow.
+- WeChat Developer Tools can retain a stale bundle or hot-reload state in which every button appears unresponsive. Recompile, clear cache, and reopen the project before changing application code. On 2026-07-27 the user confirmed the buttons worked after this refresh.
 
 ## 14. Weight Tracking Sprint and production state
 
@@ -352,12 +358,34 @@ Additional lessons from this iteration:
 - H5 and WeChat builds share `dist`. Source-level tests must target their source suites explicitly; the generated-bundle compatibility test belongs after the matching WeChat build.
 - Trend APIs and renderers must retain null points before the first record so the horizontal date scale remains accurate.
 
-## 15. Baseline for the next feature
+## 15. Body Circumference Tracking Sprint and production state
 
-- Body-weight tracking is complete across code, tests, production migration, backend deployment, documentation, and upload-ready WeChat build output.
-- Stable feature baselines before the final handoff-only merge are backend `12a508c` and frontend `232c8f0`; use the later merged `main` heads as the actual starting commits.
-- Backend tests last passed: 14. Frontend source tests last passed: 11. WeChat bundle compatibility last passed on 2026-07-27.
-- The latest generated `dist` is suitable for a manually uploaded experience version. A future frontend change must rerun `npm run verify:weapp` before upload.
+The Body Circumference Tracking Sprint was completed on 2026-07-27:
+
+- GitHub Project: [CalorieCalculator - Body Circumference Tracking Sprint (Project #5)](https://github.com/users/Hunter3304/projects/5).
+- Backend Issue #18 / Pull Request #20 delivered persistence, migration, APIs, and tests. Merge commit: `d37aa28b7f6001e264a518d6f9411d2486a40269`.
+- Frontend Issues #23 and #24 / Pull Request #25 delivered the homepage action and summary, sparse editor, selector-based trend page, and tests. Merge commit: `a86e8d3849ca2458416d6837fff4c7a5fa66fa62`.
+- Backend Issue #19 tracks production and release documentation. Frontend Issue #26 records the public deployment, rollback, container, and WeChat release summary.
+- Backend verification passed with 23 Maven tests and a clean package. Frontend verification passed with 16 source tests, ESLint, Stylelint, H5 build, and `verify:weapp`.
+- The production backup is `/opt/calorie-calculator/backups/calorie_calculator-before-circumference-20260727.dump`; it was verified with `pg_restore --list` and stored with mode 600.
+- Rollback image `calorie-calculator-backend:pre-circumference-20260727` points to image ID `sha256:0921a1b340f06c69669762c3278f62a5c0b88050b22f24c92b3815c7014796f7`.
+- The deployment archive SHA-256 was `784a8c9bc478a3f1d41cd361f3ebdf32d9eb2215f670cd3582ee1031894a00ae` locally and remotely.
+- The non-destructive migration succeeded and only the backend container was recreated.
+- PostgreSQL container ID remained `d03bd2712c2e4c2192776c43c0f7e929684f40e2e0cb8af4e2b1d6f56e5293ea`.
+- Nginx container ID remained `1784b7259b79f6cbc8c05d27bb103c60102ba220f6b261205c2dbef87ac9ffc5`.
+- Deployed backend container ID was `3acb56560cb89fa9349622621270c405ab7d5a5de8782303984538a822903b0e`.
+- All three containers were healthy/running. Public ports 5432 and 8080 remained closed, `/api/import/json` remained blocked, and `/healthz` passed.
+- Production API acceptance covered empty state, partial input, independent carry-forward, all-blank no-op, trend, clear fallback, delete, and cleanup. Temporary acceptance records were deleted.
+- Existing user food, daily-record, weight, and circumference data must never be printed in public Issues or documentation.
+- The user confirmed homepage buttons work in WeChat Developer Tools after refreshing its cached build. Uploading/selecting a new experience version remains manual; no upload or formal publication is claimed.
+
+## 16. Baseline for the next feature
+
+- Food, calendar, body-weight, and body-circumference functionality is complete across code, automated verification, production migration/deployment, and versioned documentation.
+- Use the latest merged `main` heads after the release-documentation PRs as the next starting commits.
+- Backend tests last passed: 23. Frontend source tests last passed: 16. WeChat bundle compatibility and H5 production build last passed on 2026-07-27.
+- The latest generated `dist` is suitable for manual WeChat Developer Tools testing/upload. A future frontend change must rerun `npm run verify:weapp`.
 - Current experience testing still uses `http://124.221.90.240/api` and requires Developer Debugging. Formal release remains blocked by the domain, ICP, HTTPS, and WeChat legal-domain tasks in section 10.
-- Preserve all existing production food, daily-record, and body-weight data. Do not rerun destructive `schema.sql` against an existing database; use a dedicated non-destructive migration for any future schema change.
-- Before implementing the next feature, read this handoff, inspect both repository statuses, create the new plan under both `doc/plans` copies, then create the Sprint/Project and cross-repository Issues.
+- Preserve all existing production food, daily-record, body-weight, and body-circumference data. Never rerun destructive `schema.sql` against an existing database; use a dedicated non-destructive migration.
+- Before implementing another feature, read this handoff, inspect both repository statuses, create the synchronized plan, create the Project/Issues, and follow the Issue-branch-PR-merge-cleanup workflow.
+- At feature completion, update both affected root README files and the synchronized iteration/handoff records. Verify shared relative file lists and SHA-256 hashes before merging.

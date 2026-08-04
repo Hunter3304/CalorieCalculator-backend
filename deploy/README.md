@@ -1,4 +1,25 @@
 # Production deployment
+## Body-circumference release record
+
+The 2026-07-27 circumference release used the non-destructive migration:
+
+```text
+src/main/resources/sql/migrations/2026-07-27-create-body-circumference-records.sql
+```
+
+Before migration, create and verify a PostgreSQL custom-format backup. The verified release backup is stored at:
+
+```text
+/opt/calorie-calculator/backups/calorie_calculator-before-circumference-20260727.dump
+```
+
+The previous backend image is retained as:
+
+```text
+calorie-calculator-backend:pre-circumference-20260727
+```
+
+Only the backend service was recreated with `docker compose up -d --no-deps backend`; PostgreSQL and Nginx remained in place. Acceptance covered health, empty snapshot, partial save, independent carry-forward, all-blank no-op, trend, clear fallback, delete, cleanup, import blocking, and closed public ports. Never include real user measurements or production secret values in logs or release documentation.
 
 This deployment runs Nginx, Spring Boot, and PostgreSQL on one Docker Compose host. Only Nginx is published to the host network. PostgreSQL and Spring Boot remain on a private Docker network.
 

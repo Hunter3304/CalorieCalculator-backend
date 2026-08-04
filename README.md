@@ -108,7 +108,7 @@ Invoke-RestMethod "http://localhost:8080/api/foods/page?page=1&size=10"
 
 Tests that start the Spring context require a reachable PostgreSQL database unless a test-specific datasource is configured.
 
-The current suite contains 14 tests, including eight body-weight service tests covering validation, effective-record lookup, trend behavior, update, and deletion.
+The current suite contains 23 tests. In addition to the body-weight coverage, the circumference service tests cover sparse values, independent carry-forward, clearing, deletion, validation, and field-specific trends.
 
 ## API overview
 
@@ -198,7 +198,7 @@ The production stack runs on Tencent Cloud Lighthouse with Docker Compose:
 
 Deployment and rollback commands are documented in [`deploy/README.md`](deploy/README.md). Never print or commit `.env.production`, and never run `docker compose down --volumes` in production.
 
-The calendar and body-weight backends were deployed and verified on 2026-07-22. The weight release used a pre-migration PostgreSQL backup, retained the previous backend image for rollback, and recreated only the backend container; the existing PostgreSQL container and volume remained in place. Health, snapshot, carry-forward, trend, delete, cleanup, and public import-blocking checks passed.
+The body-circumference backend was deployed and verified on 2026-07-27. Before migration, production was backed up to `backups/calorie_calculator-before-circumference-20260727.dump` and the previous backend image was retained as `calorie-calculator-backend:pre-circumference-20260727`. Only the backend container was recreated; the PostgreSQL and Nginx container IDs remained unchanged. Health, empty snapshot, partial save, independent carry-forward, field-specific trend, clear fallback, delete, cleanup, regression, private-port, and public import-blocking checks passed.
 
 The HTTP IP endpoint remains available temporarily for development and experience-version rollback. Formal Mini Program builds use the ICP-filed HTTPS API domain, which must also be registered as a WeChat request domain.
 

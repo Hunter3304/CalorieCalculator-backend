@@ -1,7 +1,7 @@
 # Body Circumference Tracking Sprint
 
 Date: 2026-07-27
-Status: In progress — implementation verified locally; production release pending
+Status: Completed — feature merged, production verified, and release documentation finalized
 
 ## Requested outcome
 
@@ -236,10 +236,14 @@ Also run changed-source ESLint/Stylelint checks, `git diff --check`, and visual 
 - Frontend homepage/editor: [Issue #23](https://github.com/Hunter3304/CalorieCalculator-frontend/issues/23)
 - Frontend trend: [Issue #24](https://github.com/Hunter3304/CalorieCalculator-frontend/issues/24)
 - Backend production release: [Issue #19](https://github.com/Hunter3304/CalorieCalculator-backend/issues/19)
-- Pull Requests: To be created after final feature verification.
+- Backend feature: [Pull Request #20](https://github.com/Hunter3304/CalorieCalculator-backend/pull/20) (merged)
+- Frontend feature: [Pull Request #25](https://github.com/Hunter3304/CalorieCalculator-frontend/pull/25) (merged)
+- Frontend release documentation: [Issue #26](https://github.com/Hunter3304/CalorieCalculator-frontend/issues/26)
 
 ## Plan changes
 
 - Initial plan created from the user-confirmed six-measurement scope on 2026-07-27.
 - Partial and all-blank input behavior is explicitly modeled as independent per-measurement inheritance.
 - Local implementation now passes 23 backend tests, 16 frontend source tests, WeChat compatibility verification, H5 compilation, and real local API acceptance. In-app visual browser setup remains blocked by the documented Windows sandbox refresh failure.
+- Production backup, migration, backend-only container recreation, API acceptance, regression checks, and cleanup completed on 2026-07-27.
+- The user confirmed all homepage buttons work in WeChat Developer Tools after clearing/reopening the cached build; no application code change was required for that transient tooling state.
