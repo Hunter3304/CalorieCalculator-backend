@@ -4,6 +4,7 @@ Date: 2026-08-04
 Status: Implementation verified locally; production rollout pending
 Repositories: backend and frontend
 GitHub Issues: backend [#24](https://github.com/Hunter3304/CalorieCalculator-backend/issues/24), frontend [#30](https://github.com/Hunter3304/CalorieCalculator-frontend/issues/30)
+GitHub Pull Requests: backend [#25](https://github.com/Hunter3304/CalorieCalculator-backend/pull/25), frontend [#31](https://github.com/Hunter3304/CalorieCalculator-frontend/pull/31)
 ## Implementation progress (2026-08-05)
 
 - Backend authentication, opaque hashed sessions, ownership schema/migration, guarded legacy claim, owner-scoped mappers/services/controllers, logout, account metadata, and transactional account deletion are implemented.

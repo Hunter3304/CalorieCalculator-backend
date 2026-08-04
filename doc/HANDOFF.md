@@ -56,13 +56,13 @@ Required engineering workflow for future changes:
 ### Frontend
 
 - Active implementation branch: `feature/issue-30-auth-privacy`.
-- GitHub Issue [#30](https://github.com/Hunter3304/CalorieCalculator-frontend/issues/30) tracks automatic login, authenticated requests, privacy disclosure, logout, and account deletion.
+- GitHub Issue [#30](https://github.com/Hunter3304/CalorieCalculator-frontend/issues/30) and Pull Request [#31](https://github.com/Hunter3304/CalorieCalculator-frontend/pull/31) track automatic login, authenticated requests, privacy disclosure, logout, and account deletion.
 - The working tree contains only the in-progress authentication/privacy implementation and synchronized documentation changes expected for that Issue. Preserve any later unrelated user changes.
 
 ### Backend
 
 - Active implementation branch: `feature/issue-24-wechat-auth-isolation`.
-- GitHub Issue [#24](https://github.com/Hunter3304/CalorieCalculator-backend/issues/24) tracks server-side WeChat login, hashed sessions, owner-scoped persistence, migration, and account deletion.
+- GitHub Issue [#24](https://github.com/Hunter3304/CalorieCalculator-backend/issues/24) and Pull Request [#25](https://github.com/Hunter3304/CalorieCalculator-backend/pull/25) track server-side WeChat login, hashed sessions, owner-scoped persistence, migration, and account deletion.
 - The working tree contains only the in-progress authentication/isolation implementation and documentation changes expected for that Issue. Preserve any later unrelated user changes.
 
 Do not switch either repository to `main` or delete these branches until the corresponding Pull Request has been reviewed and merged.

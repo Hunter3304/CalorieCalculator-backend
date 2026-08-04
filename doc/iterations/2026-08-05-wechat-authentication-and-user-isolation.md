@@ -1,7 +1,7 @@
 # WeChat Authentication, User Isolation, and Privacy Controls
 
 Date: 2026-08-05
-Status: Implementation verified locally; Pull Requests and production rollout pending
+Status: Implementation verified locally; Pull Request review and production rollout pending
 Repositories: backend and frontend
 
 ## Requested outcome
@@ -43,7 +43,8 @@ Remove the final code-level blockers before public Mini Program review: authenti
 
 - Backend Issue [#24](https://github.com/Hunter3304/CalorieCalculator-backend/issues/24).
 - Frontend Issue [#30](https://github.com/Hunter3304/CalorieCalculator-frontend/issues/30).
-- Pull Request links will be added after the verified branches are pushed.
+- Backend Pull Request [#25](https://github.com/Hunter3304/CalorieCalculator-backend/pull/25).
+- Frontend Pull Request [#31](https://github.com/Hunter3304/CalorieCalculator-frontend/pull/31).
 
 ## Deployment and release status
 
@@ -51,7 +52,7 @@ Experience version `1.1.2` remains tester-only and must not be submitted. The ne
 
 ## Remaining actions
 
-1. Push both branches, create and review the Pull Requests, and merge them only after approval.
+1. Review Pull Requests #25 and #31, and merge them only after approval.
 2. During a controlled maintenance window, verify the production backup and rollback artifacts, then apply the already rehearsed additive migration.
 3. Have the original owner log in first, claim legacy rows, verify counts and original data, then invite a second account.
 4. Test colliding dates, different values, cross-user updates/deletes, carry-forward, trends, logout, and deletion on physical devices.
