@@ -6,8 +6,19 @@ This deployment runs Nginx, Spring Boot, and PostgreSQL on one Docker Compose ho
 
 - Ubuntu 24.04 LTS
 - Docker Engine with the Compose plugin
-- Inbound TCP 22 and 80 allowed by the cloud firewall
-- TCP 443 will be required after a domain and TLS certificate are configured
+- Inbound TCP 22, 80, and 443 allowed by the cloud firewall
+- Trusted certificates for caloriecalculator.top/www.caloriecalculator.top and api.caloriecalculator.top
+
+## Configure TLS
+
+Install certificates outside the repository with root-only private-key permissions:
+
+    /etc/calorie-calculator/tls/root/fullchain.crt
+    /etc/calorie-calculator/tls/root/private.key
+    /etc/calorie-calculator/tls/api/fullchain.crt
+    /etc/calorie-calculator/tls/api/private.key
+
+The Nginx container mounts /etc/calorie-calculator/tls read-only. Never copy certificate private keys into the repository or Docker image. Free certificates must be replaced before expiry, followed by an Nginx configuration test and reload or recreation.
 
 ## Configure secrets
 
@@ -45,7 +56,10 @@ The import script is idempotent: it imports bundled JSON only when the table con
 
 ```sh
 curl --fail http://localhost/healthz
+curl --fail https://caloriecalculator.top/healthz
+curl --fail https://api.caloriecalculator.top/healthz
 curl --fail "http://localhost/api/foods/page?page=1&size=10"
+curl --fail "https://api.caloriecalculator.top/api/foods/page?page=1&size=10"
 curl --fail "http://localhost/api/records/calendar?month=$(date +%Y-%m)"
 docker compose --env-file .env.production -f docker-compose.production.yml ps
 ```
@@ -74,12 +88,12 @@ Do not run `docker compose down --volumes` in production because it deletes the 
 
 ## Public exposure
 
-- Public: ports 80 and, after TLS setup, 443
+- Public: ports 80 and 443
 - Administrative: port 22 restricted to trusted source IPs when practical
 - Private only: PostgreSQL 5432 and Spring Boot 8080
 - Blocked by Nginx: `/api/import/*`
 
-The IP-based HTTP deployment is suitable for infrastructure verification only. A WeChat Mini Program production release requires an approved HTTPS API domain.
+The raw-IP HTTP endpoint is retained temporarily for infrastructure verification and experience-version rollback. Formal Mini Program traffic uses https://api.caloriecalculator.top/api, and the filed root domain serves a minimal public landing page over HTTPS.
 
 ## Calendar release verification
 

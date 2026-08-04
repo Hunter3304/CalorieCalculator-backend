@@ -188,17 +188,19 @@ src/main/resources/
 
 The production stack runs on Tencent Cloud Lighthouse with Docker Compose:
 
-- Nginx is the only public container and currently publishes HTTP port 80.
+- Nginx is the only public container and publishes HTTP port 80 and HTTPS port 443.
 - Spring Boot listens only on the private Compose network at port 8080.
 - PostgreSQL 17 listens only on the private Compose network at port 5432.
 - PostgreSQL data is stored in the named `postgres_data` volume.
 - `/api/import/*` is blocked by Nginx.
+- `https://caloriecalculator.top` serves the filed public landing page.
+- `https://api.caloriecalculator.top/api` is the production Mini Program API origin.
 
 Deployment and rollback commands are documented in [`deploy/README.md`](deploy/README.md). Never print or commit `.env.production`, and never run `docker compose down --volumes` in production.
 
 The calendar and body-weight backends were deployed and verified on 2026-07-22. The weight release used a pre-migration PostgreSQL backup, retained the previous backend image for rollback, and recreated only the backend container; the existing PostgreSQL container and volume remained in place. Health, snapshot, carry-forward, trend, delete, cleanup, and public import-blocking checks passed.
 
-The HTTP IP endpoint remains suitable only for development and experience-version testing. Formal Mini Program release still requires an ICP-filed domain, HTTPS, and a configured WeChat request domain.
+The HTTP IP endpoint remains available temporarily for development and experience-version rollback. Formal Mini Program builds use the ICP-filed HTTPS API domain, which must also be registered as a WeChat request domain.
 
 ## Troubleshooting
 
