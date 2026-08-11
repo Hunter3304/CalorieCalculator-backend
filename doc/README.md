@@ -24,7 +24,7 @@ Read `HANDOFF.md` before starting work. Read the latest iteration document when 
 | 2026-07-22 | Body-weight tracking, trend chart, and production release | [2026-07-22-weight-tracking-and-production-release.md](iterations/2026-07-22-weight-tracking-and-production-release.md) |
 | 2026-07-27 | Body-circumference tracking and production release | [2026-07-27-body-circumference-tracking-and-production-release.md](iterations/2026-07-27-body-circumference-tracking-and-production-release.md) |
 | 2026-08-04 | HTTPS production rollout and formal-release blocker | [2026-08-04-https-production-and-formal-release-blocker.md](iterations/2026-08-04-https-production-and-formal-release-blocker.md) |
-| 2026-08-05 | WeChat authentication, user isolation, and privacy controls | [2026-08-05-wechat-authentication-and-user-isolation.md](iterations/2026-08-05-wechat-authentication-and-user-isolation.md) |
+| 2026-08-05 to 2026-08-11 | WeChat authentication, user isolation, production rollout, legacy claim, and release regression | [2026-08-05-wechat-authentication-and-user-isolation.md](iterations/2026-08-05-wechat-authentication-and-user-isolation.md) |
 
 The older entries were reconstructed from the engineering handoff and linked GitHub Issues/PRs. They summarize recorded feedback without presenting paraphrases as direct quotations.
 

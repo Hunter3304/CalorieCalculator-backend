@@ -1,6 +1,6 @@
 # CalorieCalculator Engineering Handoff
 
-Last updated: 2026-08-05 (Asia/Shanghai)
+Last updated: 2026-08-11 (Asia/Shanghai)
 
 ## 1. Purpose
 
@@ -55,17 +55,17 @@ Required engineering workflow for future changes:
 
 ### Frontend
 
-- Active implementation branch: `feature/issue-30-auth-privacy`.
-- GitHub Issue [#30](https://github.com/Hunter3304/CalorieCalculator-frontend/issues/30) and Pull Request [#31](https://github.com/Hunter3304/CalorieCalculator-frontend/pull/31) track automatic login, authenticated requests, privacy disclosure, logout, and account deletion.
-- The working tree contains only the in-progress authentication/privacy implementation and synchronized documentation changes expected for that Issue. Preserve any later unrelated user changes.
+- Authentication/privacy Issue [#30](https://github.com/Hunter3304/CalorieCalculator-frontend/issues/30) and Pull Request [#31](https://github.com/Hunter3304/CalorieCalculator-frontend/pull/31) are closed/merged. `main` includes merge commit `96fae2c`.
+- Release-documentation closeout is tracked by Issue [#32](https://github.com/Hunter3304/CalorieCalculator-frontend/issues/32) on branch `docs/issue-32-auth-release-handoff` until its Pull Request is merged.
+- `project.config.json` and `project.private.config.json` contain user-owned WeChat DevTools changes. Preserve them and do not include them in documentation commits unless the user explicitly requests it.
 
 ### Backend
 
-- Active implementation branch: `feature/issue-24-wechat-auth-isolation`.
-- GitHub Issue [#24](https://github.com/Hunter3304/CalorieCalculator-backend/issues/24) and Pull Request [#25](https://github.com/Hunter3304/CalorieCalculator-backend/pull/25) track server-side WeChat login, hashed sessions, owner-scoped persistence, migration, and account deletion.
-- The working tree contains only the in-progress authentication/isolation implementation and documentation changes expected for that Issue. Preserve any later unrelated user changes.
+- Authentication/isolation Issue [#24](https://github.com/Hunter3304/CalorieCalculator-backend/issues/24) and Pull Request [#25](https://github.com/Hunter3304/CalorieCalculator-backend/pull/25) are closed/merged.
+- Login hotfix Issue [#26](https://github.com/Hunter3304/CalorieCalculator-backend/issues/26) and Pull Request [#27](https://github.com/Hunter3304/CalorieCalculator-backend/pull/27) are closed/merged. `main` includes merge commit `0384f7e`.
+- Release-documentation closeout is tracked by Issue [#28](https://github.com/Hunter3304/CalorieCalculator-backend/issues/28) on branch `docs/issue-28-auth-release-handoff` until its Pull Request is merged.
 
-Do not switch either repository to `main` or delete these branches until the corresponding Pull Request has been reviewed and merged.
+After the documentation PRs merge, synchronize local `main`, confirm the Issues closed, and delete only the corresponding documentation branches. Preserve unrelated worktrees and user-owned files.
 
 ## 5. Backend
 
@@ -377,12 +377,12 @@ The Body Circumference Tracking Sprint was completed on 2026-07-27:
 
 ## 16. Baseline for the next feature
 
-- Food, calendar, body-weight, and body-circumference functionality remains complete across code, automated verification, and the current production deployment.
-- The authentication/isolation replacement is implemented on the active feature branches but is not yet in production. Backend verification passes 33 tests plus `clean package`; frontend verification passes 19 source tests, targeted ESLint/Stylelint, `verify:weapp`, and the H5 production build.
-- Experience version `1.1.2` still uses `https://api.caloriecalculator.top/api` and works without Developer Debugging, but it predates authentication and remains suitable only for approved testers.
-- Preserve all existing production food, daily-record, body-weight, and body-circumference data. Never rerun destructive `schema.sql` against an existing database; use the additive authentication/ownership migration only after a verified backup.
-- The next continuation should finish PR review/merge, privately configure the production AppID/AppSecret, deploy the migration and backend in a maintenance window, let the original owner log in first, run the guarded legacy claim, and complete two-user acceptance before formal review.
-- At feature completion, update both affected root README files and the synchronized iteration/handoff records. Verify shared relative file lists and SHA-256 hashes before merging.
+- Food, calendar, body-weight, and body-circumference functionality remains complete across code, automated verification, the authenticated production deployment, and original-owner device regression.
+- Authentication, hashed opaque sessions, owner-scoped persistence, privacy/account controls, production migration, private credential configuration, original-owner login, and guarded legacy claim are deployed. The migration-only legacy owner no longer exists.
+- The pre-authentication experience version `1.1.2` must not be submitted. Use only the authenticated build for remaining acceptance and formal review.
+- Preserve all production personal data. Never rerun destructive `schema.sql` against an existing database. A verified pre-claim backup and earlier pre-migration rollback artifacts are retained outside Git; do not publish their exact paths or identifiers.
+- The remaining release gates are physical two-real-account isolation/account-deletion acceptance, WeChat privacy-guide completion, final regression without Developer Debugging, formal review, and publication after approval.
+- At feature completion, update both affected root README files and synchronized plan/iteration/HANDOFF records. Verify shared relative file lists and SHA-256 hashes before merging.
 
 ## 17. HTTPS rollout problems and solutions
 
@@ -401,7 +401,7 @@ The 2026-08-04 HTTPS rollout exposed several operational issues. Preserve these 
 
 ## 18. Authentication and tenant-isolation release status
 
-The code-level formal-release blocker was implemented and locally verified on 2026-08-05, but production rollout and physical two-user acceptance remain release gates.
+The code-level blocker, production migration, authenticated backend rollout, login hotfix, original-owner login, and guarded legacy claim are complete. Physical two-user acceptance and WeChat review remain release gates.
 
 Implemented backend behavior:
 
@@ -423,15 +423,43 @@ Verification completed locally:
 - Backend: 33 Maven tests passed; `mvnw.cmd clean package` succeeded.
 - Frontend: 19 tests passed; targeted ESLint and Stylelint passed; `verify:weapp` passed; H5 production build passed with the existing 337 KiB entrypoint-size warning.
 - Static SQL audit confirmed owner predicates on all personal reads/writes/updates/deletes.
-- A disposable PostgreSQL database loaded from the `origin/main` legacy schema preserved all four representative legacy row types through migration and claim; two owners successfully stored colliding dates. Separate guard tests confirmed the claim aborts with both zero and two real users. Both temporary databases were removed. Production migration is still pending.
+- A disposable PostgreSQL database loaded from the legacy schema preserved all four representative legacy row types through migration and claim; two owners successfully stored colliding dates. Separate guard tests confirmed the claim aborts with both zero and two real users. Both temporary databases were removed.
+- Production migration, verified backup, sole-real-user login, guarded claim, and aggregate post-claim verification are complete. No migration-only legacy owner remains.
 
 Remaining mandatory release gates:
 
-1. Review and merge backend Issue #24 and frontend Issue #30 Pull Requests.
-2. Have the user enter the Mini Program AppSecret privately in the mode-600 production environment file; never transmit it through chat or Git.
-3. Back up and verify PostgreSQL, retain compatible rollback artifacts, apply the additive migration, and deploy the authenticated backend during a maintenance window.
-4. Upload a new experience build. The original owner must log in before any second account, then the guarded legacy-claim script may run.
-5. Verify the original data and run physical acceptance using two different WeChat accounts with colliding dates/different values, including list/read/update/delete/carry-forward/trend isolation and account deletion.
-6. Complete the WeChat privacy-protection guide and physical-device regression without Developer Debugging. Only the accepted new experience version may be submitted for formal review.
+1. Use a second real WeChat account to verify a private empty initial state and colliding dates with different values, including list/read/update/delete/carry-forward/trend isolation, logout, and permanent deletion of the second test account.
+2. Complete the WeChat privacy-protection guide and final physical-device regression without Developer Debugging.
+3. Submit only the authenticated accepted build for formal review, then publish after approval.
 
-Until all six gates pass, do not submit version `1.1.2` or the new build for formal public review.
+Do not submit the pre-authentication version `1.1.2`. Do not claim the authenticated build is publicly released until all three gates pass.
+
+## 19. Authentication production completion and incident record
+
+Production completion from 2026-08-05 through 2026-08-11:
+
+- Backend PR #25 and frontend PR #31 were merged. The AppID/AppSecret were configured only in the server environment, the ownership migration was applied after a verified backup, and the authenticated backend was deployed while PostgreSQL and Nginx remained in place.
+- The authenticated experience build was uploaded. The original owner completed the first real login, producing exactly one real user and one active hashed session before any second account was introduced.
+- On 2026-08-11, a fresh custom-format backup passed `pg_restore --list`. The guarded claim transaction required exactly one real user, moved every legacy-owned personal row to that user, verified no legacy-owned rows remained, deleted the migration-only owner, and committed. Aggregate pre/post counts matched.
+- Production schema audit found five owner columns, zero null personal owners, zero public foods incorrectly bound to an owner, three owner-aware unique indexes, five owner foreign keys, and only 64-character SHA-256 session hashes. Public unauthenticated personal access returns 401; HTTPS health and landing return 200; import remains blocked; ports 5432 and 8080 remain closed publicly.
+- Verification on 2026-08-11 passed 35 backend tests, 19 frontend tests, targeted ESLint/Stylelint, and `verify:weapp`. The original owner confirmed calendar and circumference save behavior.
+
+Incident: WeChat login returned HTTP 502 after the first authenticated deployment.
+
+- Direct network/TLS connectivity to `api.weixin.qq.com` was healthy, but a production Java 21 probe reproduced `org.springframework.web.client.UnknownContentTypeException`.
+- WeChat returned JSON with a non-standard content type parameter. Spring's message converter rejected direct conversion to the response record.
+- Backend Issue #26 / PR #27 changed the client to receive the body as `String`, parse JSON explicitly, ignore unrelated fields such as `session_key`/`errmsg`, preserve 401 for rejected codes and 502 for malformed/upstream failures, and added regression tests.
+- All 35 backend tests passed. An isolated candidate container in the production Java 21/network environment changed the invalid-code result from 502 to the expected 401 before the hotfix replaced only the backend container.
+
+Incident: WeChat DevTools reported `dist/app.json` missing and failed to start the simulator.
+
+- `verify:weapp` clears and rebuilds `dist`. DevTools tried to launch during the temporary interval after deletion and before Webpack emitted `app.json`; this was not an API or circumference-save defect.
+- The build was allowed to finish without interruption. `dist/app.json` and `dist/app.js` were verified, and root `project.config.json` correctly retained `miniprogramRoot: "dist/"`.
+- Normal Compile or reopening the frontend project cleared the stale simulator state. The user then confirmed the simulator ran and circumference saving worked.
+- When this recurs, do not change `miniprogramRoot` if it is already `dist/`. Wait for the Taro build, verify the generated file, then recompile/reopen DevTools.
+
+Remaining external actions:
+
+- Complete physical isolation and account-deletion acceptance with a second real WeChat account. The original-owner legacy claim is complete, so a second account may now be introduced safely.
+- Complete the WeChat privacy-protection guide and final no-Developer-Debugging device regression.
+- Submit only the authenticated accepted build for formal review and publish only after approval.

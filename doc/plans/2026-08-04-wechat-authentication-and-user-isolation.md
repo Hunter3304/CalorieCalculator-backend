@@ -1,22 +1,28 @@
 # WeChat Authentication and User Isolation Plan
 
 Date: 2026-08-04
-Status: Implementation verified locally; production rollout pending
+Status: Production rollout, login hotfix, and original-owner claim complete; two-account acceptance and formal review pending
 Repositories: backend and frontend
 GitHub Issues: backend [#24](https://github.com/Hunter3304/CalorieCalculator-backend/issues/24), frontend [#30](https://github.com/Hunter3304/CalorieCalculator-frontend/issues/30)
 GitHub Pull Requests: backend [#25](https://github.com/Hunter3304/CalorieCalculator-backend/pull/25), frontend [#31](https://github.com/Hunter3304/CalorieCalculator-frontend/pull/31)
-## Implementation progress (2026-08-05)
+## Implementation progress (updated 2026-08-11)
 
 - Backend authentication, opaque hashed sessions, ownership schema/migration, guarded legacy claim, owner-scoped mappers/services/controllers, logout, account metadata, and transactional account deletion are implemented.
 - Frontend single-flight login, Bearer request wrapper, one-time 401 recovery, privacy/account page, logout, and confirmed account deletion are implemented.
 - Backend verification: 33 tests and `clean package` passed.
 - Frontend verification: 19 tests, targeted ESLint/Stylelint, `verify:weapp`, and H5 production build passed. H5 retains the known 337 KiB entrypoint-size warning.
 - Disposable PostgreSQL acceptance passed against the legacy schema: four legacy row types were preserved and claimed, two owners stored colliding dates, and the guarded claim rejected both zero and two real users.
-- Still pending: PR merge, production PostgreSQL backup/migration, private production secret entry, deployment, original-owner legacy claim, two-account physical isolation acceptance, privacy-guide configuration, experience upload, and formal review.
+- Backend PR #25 and frontend PR #31 were merged. The authenticated experience build was uploaded and the original owner completed a real WeChat login.
+- Production PostgreSQL was backed up and verified, the additive ownership migration was applied, production credentials were configured privately, and the authenticated backend was deployed without recreating PostgreSQL or Nginx.
+- WeChat login initially failed because the upstream `code2Session` response used a non-standard JSON content type. Backend Issue #26 / PR #27 changed the client to parse the response body explicitly; 35 backend tests and a production Java 21 candidate check passed before deployment.
+- On 2026-08-11, a fresh pre-claim backup passed `pg_restore --list`. The guarded claim found exactly one real user, moved all legacy-owned records transactionally, deleted the migration-only owner, and passed aggregate post-claim verification.
+- Production isolation audit confirmed five owner columns, no null personal owners, no incorrectly owned public foods, owner-aware unique indexes and foreign keys, hashed sessions only, unauthenticated 401 behavior, HTTPS health, import blocking, and closed public 5432/8080.
+- The original owner confirmed calendar and circumference save behavior after rebuilding `dist` and recompiling WeChat DevTools. Automated verification passed 35 backend tests, 19 frontend tests, targeted ESLint/Stylelint, and `verify:weapp`.
+- Still pending: physical acceptance with two distinct WeChat accounts, WeChat privacy-protection guide completion, final physical-device regression, formal review submission, and publication after approval.
 
 ## Release gate
 
-Experience version `1.1.2` must not be submitted for public review. Formal review can begin only after every API request has an authenticated server-derived user, all personal reads and writes are owner-scoped, existing production data belongs to the original owner, account/data deletion works, and two different WeChat users pass isolation acceptance.
+The pre-authentication experience version `1.1.2` must not be submitted for public review. Formal review may use only the authenticated build after two different real WeChat users pass isolation and account-deletion acceptance and the privacy-protection guide is complete.
 
 ## Security rules
 
@@ -70,7 +76,8 @@ Experience version `1.1.2` must not be submitted for public review. Formal revie
 
 ## Known external/manual gates
 
-- GitHub repository authorization is complete; Issues #24 and #30 track implementation.
-- The AppSecret must be entered privately by the user on the server.
-- The original owner must perform the first authenticated Mini Program login before legacy data is claimed.
-- Privacy-guide configuration, experience upload, formal review submission, and final publish require the user's authenticated WeChat console/Developer Tools session.
+- GitHub implementation Issues #24/#30 and PRs #25/#31 are closed/merged. Login hotfix Issue #26 and PR #27 are also closed/merged.
+- The AppSecret was configured privately on the server; it must never be copied into documentation, Git, logs, or chat.
+- Original-owner login and guarded legacy claim are complete.
+- A second real WeChat account must still complete physical isolation and account-deletion acceptance.
+- Privacy-guide configuration, formal review submission, and final publish require the user's authenticated WeChat console/Developer Tools session.
