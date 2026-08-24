@@ -212,7 +212,9 @@ The body-circumference backend was deployed and verified on 2026-07-27. Before m
 
 The HTTP IP endpoint remains available temporarily for development and experience-version rollback. Formal Mini Program builds use the ICP-filed HTTPS API domain, which must also be registered as a WeChat request domain.
 
-The HTTPS experience version `1.1.2` works on a physical device without Developer Debugging, but it remains tester-only because it predates authentication. The replacement implementation now includes server-side WeChat code exchange, hashed opaque sessions, owner-scoped persistence, guarded legacy-data claiming, privacy disclosure, and account/data deletion. It must still be merged, backed up and migrated in production, deployed with the AppSecret entered privately, uploaded as a new experience version, and accepted with two different WeChat accounts before formal review.
+The authenticated backend is now in production. Backend PR #25 and frontend PR #31 were merged; PostgreSQL was backed up and migrated additively; AppID/AppSecret were configured only in the mode-600 server environment; and the authenticated experience build completed a real original-owner login. Backend Issue #26 / PR #27 fixed WeChat `code2Session` responses whose non-standard JSON content type caused `UnknownContentTypeException` and HTTP 502 in Java 21.
+
+On 2026-08-11, a fresh pre-claim database backup passed `pg_restore --list`, the guarded one-user legacy claim committed successfully, and aggregate verification confirmed all historical personal rows belong to the sole real user with no legacy owner remaining. Production isolation checks confirmed populated owner columns, owner-aware foreign keys/unique indexes, SHA-256-only stored sessions, unauthenticated 401 behavior, HTTPS health, import blocking, and closed public 5432/8080. Formal review still requires physical isolation/account-deletion acceptance with a second real WeChat account and completion of the WeChat privacy-protection guide.
 
 ## Troubleshooting
 
@@ -220,3 +222,4 @@ The HTTPS experience version `1.1.2` works on a physical device without Develope
 - `password authentication failed`: set `PGUSER` and `PGPASSWORD` to valid PostgreSQL credentials.
 - Port `8080` is occupied: set `$env:PORT = "8081"` and update the frontend API URL accordingly.
 - `mvn` is not recognized: use `.\mvnw.cmd`; global Maven is optional.
+- WeChat login returns HTTP 502 while direct HTTPS connectivity works: check for `UnknownContentTypeException`. WeChat may return JSON with a non-standard content type; receive the body as text and parse JSON explicitly rather than relying on the HTTP message converter.

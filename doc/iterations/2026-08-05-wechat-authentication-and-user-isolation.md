@@ -1,7 +1,7 @@
 # WeChat Authentication, User Isolation, and Privacy Controls
 
 Date: 2026-08-05
-Status: Implementation verified locally; Pull Request review and production rollout pending
+Status: Production rollout, original-owner claim, and single-account regression complete; two-account acceptance and formal review pending
 Repositories: backend and frontend
 
 ## Requested outcome
@@ -37,7 +37,13 @@ Remove the final code-level blockers before public Mini Program review: authenti
 - The WeChat bundle contains no unsupported optional-chaining/nullish-coalescing tokens.
 - SQL inspection found authenticated owner predicates on every personal read/write/update/delete path.
 - Disposable PostgreSQL acceptance loaded the `origin/main` legacy schema, preserved daily/custom-food/weight/circumference rows through migration and one-user claim, allowed two owners to use colliding dates, and confirmed the claim rejects both zero and two real users. Both temporary databases were removed.
-- No production migration, production deployment, real WeChat login, visual-device approval, or physical two-user acceptance is claimed in this iteration record yet.
+- Backend PR #25 and frontend PR #31 were merged. Production backup, additive migration, private credential configuration, authenticated deployment, real WeChat login, and guarded legacy claim are complete.
+- Backend login hotfix Issue #26 / PR #27 resolved a production Java 21 `UnknownContentTypeException` caused by WeChat's non-standard JSON content type. The fix passed 35 tests and isolated production-network candidate validation before deployment.
+- A fresh 2026-08-11 pre-claim backup passed `pg_restore --list`; the claim transaction moved every legacy-owned row to the sole real user and removed the legacy owner. Aggregate counts matched after the transaction.
+- Production audit found all personal owner columns populated, public foods unowned, owner-aware unique indexes and foreign keys present, and every stored session token represented only by a 64-character SHA-256 hash.
+- The original owner confirmed calendar and circumference save behavior. A transient WeChat DevTools `dist/app.json` launch failure occurred while Taro was rebuilding `dist`; waiting for the build, verifying `miniprogramRoot` as `dist/`, and recompiling/reopening the project resolved it without a code change.
+- Current verification: 35 backend tests, 19 frontend tests, targeted ESLint/Stylelint, `verify:weapp`, HTTPS health/landing checks, unauthenticated 401, import blocking, and closed public 5432/8080 all passed.
+- Physical two-real-account isolation, privacy-guide completion, formal review, and publication are not yet claimed.
 
 ## GitHub tracking
 
@@ -48,12 +54,11 @@ Remove the final code-level blockers before public Mini Program review: authenti
 
 ## Deployment and release status
 
-Experience version `1.1.2` remains tester-only and must not be submitted. The new implementation still requires reviewed merges, a verified PostgreSQL backup, additive migration, private AppSecret entry, authenticated backend deployment, a new experience upload, original-owner first login and guarded legacy claim, and two-account physical isolation acceptance.
+The pre-authentication experience version `1.1.2` remains unsuitable for review. The authenticated build, production backend, migration, original-owner login, and legacy claim are complete. Public review remains gated only by two-real-account physical isolation/account-deletion acceptance, WeChat privacy-guide completion, final device regression, and submission of the accepted authenticated build.
 
 ## Remaining actions
 
-1. Review Pull Requests #25 and #31, and merge them only after approval.
-2. During a controlled maintenance window, verify the production backup and rollback artifacts, then apply the already rehearsed additive migration.
-3. Have the original owner log in first, claim legacy rows, verify counts and original data, then invite a second account.
-4. Test colliding dates, different values, cross-user updates/deletes, carry-forward, trends, logout, and deletion on physical devices.
-5. Complete the WeChat privacy-protection guide, upload the accepted build, submit formal review, and publish only after approval.
+1. Use a second real WeChat account to confirm empty/private initial state, colliding dates with different values, read/update/delete/carry-forward/trend isolation, logout, and permanent deletion of the second test account.
+2. Complete the WeChat privacy-protection guide and final physical-device regression without Developer Debugging.
+3. Submit only the authenticated accepted build for formal review, then publish after approval.
+4. Merge the release-documentation PRs for backend Issue #28 and frontend Issue #32, then delete their working branches.
